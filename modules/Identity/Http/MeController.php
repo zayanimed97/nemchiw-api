@@ -16,6 +16,14 @@ final class MeController
         return new JsonResponse(ProfileResource::make($this->user($request))->resolve());
     }
 
+    public function update(UpdateProfileRequest $request): JsonResponse
+    {
+        $user = $this->user($request);
+        $user->fill($request->columns())->save();
+
+        return new JsonResponse(ProfileResource::make($user)->resolve());
+    }
+
     public function signOut(Request $request): Response
     {
         $this->user($request)->currentAccessToken()->delete();
