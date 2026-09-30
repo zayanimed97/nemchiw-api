@@ -1,0 +1,317 @@
+[
+  {
+    "id": "ain-draham",
+    "latitude": 36.778,
+    "longitude": 8.687,
+    "governorate": "jendouba",
+    "type": "forest",
+    "access": "car",
+    "water": true,
+    "coverage": "good",
+    "permit": "no",
+    "name": {
+      "ar": "عين دراهم",
+      "fr": "Aïn Draham",
+      "en": "Ain Draham"
+    },
+    "description": {
+      "ar": "غابة فرنان كثيفة في جبال خمير. الليل يبرد برشا حتى في الصيف، وفي الشتاء ينجّم يطيح الثلج. جيب غطا زايد.",
+      "fr": "Épaisse forêt de chênes-lièges dans les monts de Kroumirie. Les nuits sont froides même l’été, et il peut neiger l’hiver. Prévoyez une couverture en plus.",
+      "en": "Dense cork-oak forest in the Kroumirie mountains. Nights are cold even in summer, and it can snow in winter. Bring an extra blanket."
+    }
+  },
+  {
+    "id": "beni-mtir",
+    "latitude": 36.739,
+    "longitude": 8.735,
+    "governorate": "jendouba",
+    "type": "forest",
+    "access": "car",
+    "water": true,
+    "coverage": "weak",
+    "permit": "no",
+    "name": {
+      "ar": "بني مطير",
+      "fr": "Beni Mtir",
+      "en": "Beni Mtir"
+    },
+    "description": {
+      "ar": "بحيرة السدّ وسط الغابة، هدوء كبير والطريق مزيانة. ماء الشرب من العين في القرية، موش من البحيرة.",
+      "fr": "Lac de barrage au milieu de la forêt, très calme, route en bon état. Eau potable à la source du village, pas au lac.",
+      "en": "A reservoir lake in the forest, very quiet, good road. Drinking water from the village spring, not the lake."
+    }
+  },
+  {
+    "id": "tabarka",
+    "latitude": 36.958,
+    "longitude": 8.7545,
+    "governorate": "jendouba",
+    "type": "beach",
+    "access": "car",
+    "water": true,
+    "coverage": "good",
+    "permit": "no",
+    "name": {
+      "ar": "طبرقة",
+      "fr": "Tabarka",
+      "en": "Tabarka"
+    },
+    "description": {
+      "ar": "بحر وغابة صنوبر قريبين من المدينة. ساهل للعايلات والمبتدئين، والحوانت قراب.",
+      "fr": "Mer et pinède près de la ville. Facile pour les familles et les débutants, commerces à proximité.",
+      "en": "Sea and pine woods close to town. Easy for families and first-timers, with shops nearby."
+    }
+  },
+  {
+    "id": "cap-serrat",
+    "latitude": 37.226,
+    "longitude": 9.215,
+    "governorate": "bizerte",
+    "type": "beach",
+    "access": "car",
+    "water": false,
+    "coverage": "weak",
+    "permit": "no",
+    "name": {
+      "ar": "كاب سرّاط",
+      "fr": "Cap Serrat",
+      "en": "Cap Serrat"
+    },
+    "description": {
+      "ar": "شطّ طويل وتلال خضراء، من أجمل بحور الشمال. آخر الطريق تراب، ما فمّاش ماء: جيب معاك.",
+      "fr": "Longue plage et collines vertes, parmi les plus belles du nord. Fin de route en piste, pas d’eau sur place : apportez la vôtre.",
+      "en": "A long beach below green hills, one of the finest on the north coast. The last stretch is a dirt track and there is no water: bring your own."
+    }
+  },
+  {
+    "id": "sidi-mechreg",
+    "latitude": 37.16,
+    "longitude": 9.121,
+    "governorate": "bizerte",
+    "type": "beach",
+    "access": "car",
+    "water": false,
+    "coverage": "weak",
+    "permit": "no",
+    "name": {
+      "ar": "سيدي مشرق",
+      "fr": "Sidi Mechreg",
+      "en": "Sidi Mechreg"
+    },
+    "description": {
+      "ar": "خليج صغير فيه صخرة كبيرة في البحر وبقايا حمّام روماني. الريح تقوى العشيّة.",
+      "fr": "Petite baie avec un grand rocher en mer et des vestiges de thermes romains. Le vent se lève en fin de journée.",
+      "en": "A small bay with a big rock offshore and the remains of Roman baths. The wind picks up in the evening."
+    }
+  },
+  {
+    "id": "rass-angela",
+    "latitude": 37.34,
+    "longitude": 9.86,
+    "governorate": "bizerte",
+    "type": "beach",
+    "access": "car",
+    "water": true,
+    "coverage": "good",
+    "permit": "no",
+    "name": {
+      "ar": "راس أنجلة",
+      "fr": "Ras Angela",
+      "en": "Ras Angela"
+    },
+    "description": {
+      "ar": "أقصى نقطة في شمال إفريقيا، قريبة من بنزرت. صخور وخلجان صغار، واللّوج ساهل.",
+      "fr": "Le point le plus au nord de l’Afrique, près de Bizerte. Rochers et petites criques, accès facile.",
+      "en": "The northernmost point of Africa, near Bizerte. Rocks and small coves, easy to reach."
+    }
+  },
+  {
+    "id": "ichkeul",
+    "latitude": 37.16,
+    "longitude": 9.67,
+    "governorate": "bizerte",
+    "type": "mountain",
+    "access": "car",
+    "water": true,
+    "coverage": "good",
+    "permit": "yes",
+    "name": {
+      "ar": "إشكل",
+      "fr": "Ichkeul",
+      "en": "Ichkeul"
+    },
+    "description": {
+      "ar": "منتزه وطني مسجّل في اليونسكو، جبل فوق بحيرة فيها الطيور المهاجرة. التخييم يستحقّ رخصة من إدارة المنتزه.",
+      "fr": "Parc national inscrit à l’UNESCO, une montagne au-dessus d’un lac d’oiseaux migrateurs. Le camping demande une autorisation du parc.",
+      "en": "A UNESCO-listed national park, a mountain above a lake full of migrating birds. Camping needs permission from the park office."
+    }
+  },
+  {
+    "id": "zaghouan",
+    "latitude": 36.38,
+    "longitude": 10.103,
+    "governorate": "zaghouan",
+    "type": "mountain",
+    "access": "car",
+    "water": true,
+    "coverage": "good",
+    "permit": "unknown",
+    "name": {
+      "ar": "جبل زغوان",
+      "fr": "Djebel Zaghouan",
+      "en": "Jebel Zaghouan"
+    },
+    "description": {
+      "ar": "ساعة برك على تونس. معبد المياه الروماني تحت، والصعود للقمّة يعطيك منظر على السهل الكل.",
+      "fr": "À une heure de Tunis. Le temple des Eaux romain en bas, et depuis le sommet une vue sur toute la plaine.",
+      "en": "An hour from Tunis. The Roman Water Temple below, and a view over the whole plain from the summit."
+    }
+  },
+  {
+    "id": "el-haouaria",
+    "latitude": 37.05,
+    "longitude": 11.01,
+    "governorate": "nabeul",
+    "type": "beach",
+    "access": "car",
+    "water": false,
+    "coverage": "good",
+    "permit": "no",
+    "name": {
+      "ar": "الهوارية",
+      "fr": "El Haouaria",
+      "en": "El Haouaria"
+    },
+    "description": {
+      "ar": "راس الوطن القبلي، جرف عالي فوق البحر وتشوف زمبرة. الريح قوية برشا: ثبّت الخيمة مليح.",
+      "fr": "La pointe du cap Bon, falaises au-dessus de la mer avec vue sur Zembra. Vent très fort : plantez bien la tente.",
+      "en": "The tip of Cap Bon, cliffs over the sea with Zembra island in view. Very windy: stake the tent down well."
+    }
+  },
+  {
+    "id": "jebel-chambi",
+    "latitude": 35.2,
+    "longitude": 8.68,
+    "governorate": "kasserine",
+    "type": "mountain",
+    "access": "car",
+    "water": false,
+    "coverage": "weak",
+    "permit": "yes",
+    "name": {
+      "ar": "جبل الشعانبي",
+      "fr": "Djebel Chambi",
+      "en": "Jebel Chambi"
+    },
+    "description": {
+      "ar": "أعلى جبل في تونس ومنتزه وطني. الدخول والتخييم يستحقّو رخصة، وثبّت في الوضع الأمني قبل ما تمشي.",
+      "fr": "Le plus haut sommet de Tunisie, parc national. Accès et camping sur autorisation ; vérifiez la situation sécuritaire avant de partir.",
+      "en": "Tunisia’s highest peak and a national park. Entry and camping need a permit; check the security situation before you go."
+    }
+  },
+  {
+    "id": "jebel-serj",
+    "latitude": 35.93,
+    "longitude": 9.58,
+    "governorate": "siliana",
+    "type": "mountain",
+    "access": "fourByFour",
+    "water": false,
+    "coverage": "weak",
+    "permit": "unknown",
+    "name": {
+      "ar": "جبل السرج",
+      "fr": "Djebel Serj",
+      "en": "Jebel Serj"
+    },
+    "description": {
+      "ar": "غابة قيقب نادرة فوق الجبل. الطريق للفوق تستحقّ 4×4، وما فمّاش ماء.",
+      "fr": "Rare forêt d’érables en altitude. La piste vers le haut demande un 4×4, pas d’eau sur place.",
+      "en": "A rare maple forest near the top. The track up needs a 4×4, and there is no water."
+    }
+  },
+  {
+    "id": "tamerza",
+    "latitude": 34.39,
+    "longitude": 7.94,
+    "governorate": "tozeur",
+    "type": "mountain",
+    "access": "car",
+    "water": true,
+    "coverage": "weak",
+    "permit": "no",
+    "name": {
+      "ar": "تمغزة",
+      "fr": "Tamerza",
+      "en": "Tamerza"
+    },
+    "description": {
+      "ar": "واحة جبلية وكانيون فيه شلّال. النهار سخون، الليل يبرد: جيب حوايج للزوز.",
+      "fr": "Oasis de montagne et canyon avec une cascade. Journées chaudes, nuits fraîches : prévoyez les deux.",
+      "en": "A mountain oasis and canyon with a waterfall. Hot days, cool nights: pack for both."
+    }
+  },
+  {
+    "id": "douz",
+    "latitude": 33.44,
+    "longitude": 9.02,
+    "governorate": "kebili",
+    "type": "desert",
+    "access": "car",
+    "water": true,
+    "coverage": "good",
+    "permit": "no",
+    "name": {
+      "ar": "دوز",
+      "fr": "Douz",
+      "en": "Douz"
+    },
+    "description": {
+      "ar": "باب الصحراء. الكثبان على طرف المدينة والكرهبة العادية توصل، وفمّا مخيّمات فيهم الماء.",
+      "fr": "La porte du désert. Dunes aux portes de la ville, accessibles en voiture, et campements avec eau.",
+      "en": "The gateway to the Sahara. Dunes at the edge of town, reachable by car, with camps that have water."
+    }
+  },
+  {
+    "id": "ksar-ghilane",
+    "latitude": 32.99,
+    "longitude": 9.6,
+    "governorate": "kebili",
+    "type": "desert",
+    "access": "fourByFour",
+    "water": true,
+    "coverage": "weak",
+    "permit": "no",
+    "name": {
+      "ar": "قصر غيلان",
+      "fr": "Ksar Ghilane",
+      "en": "Ksar Ghilane"
+    },
+    "description": {
+      "ar": "واحة وسط الرمل فيها عين ماء سخون. الطريق تستحقّ 4×4، والنجوم في الليل ما تتنساش.",
+      "fr": "Oasis au milieu des dunes avec une source chaude. Piste en 4×4, et un ciel étoilé inoubliable.",
+      "en": "An oasis in the dunes with a hot spring. A 4×4 track, and a night sky you won’t forget."
+    }
+  },
+  {
+    "id": "chenini",
+    "latitude": 32.91,
+    "longitude": 10.26,
+    "governorate": "tataouine",
+    "type": "mountain",
+    "access": "car",
+    "water": false,
+    "coverage": "weak",
+    "permit": "no",
+    "name": {
+      "ar": "شنني",
+      "fr": "Chenini",
+      "en": "Chenini"
+    },
+    "description": {
+      "ar": "قرية بربرية قديمة فوق الجبل، الديار محفورة في الصخر. خيّم بعيد على الديار واحترم السكّان.",
+      "fr": "Ancien village berbère perché, maisons creusées dans la roche. Campez à l’écart des habitations et respectez les habitants.",
+      "en": "An old hilltop Berber village with homes carved into the rock. Camp away from the houses and respect the people who live there."
+    }
+  }
+]
