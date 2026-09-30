@@ -21,9 +21,11 @@ it('returns every spot in the contract shape', function () {
 });
 
 it('returns only spots changed after updatedSince', function () {
+    $this->getJson('/api/v1/spots');
+    $this->travel(10)->minutes();
     $since = $this->getJson('/api/v1/spots')->json('serverTime');
 
-    $this->travel(5)->minutes();
+    $this->travel(10)->minutes();
     $spot = Spot::findOrFail('tabarka');
     $spot->water = ! $spot->water;
     $spot->save();
@@ -32,6 +34,20 @@ it('returns only spots changed after updatedSince', function () {
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.id', 'tabarka');
+});
+
+it('still delivers a row that committed after the read with an earlier stamp', function () {
+    $this->travel(10)->minutes();
+    $since = $this->getJson('/api/v1/spots')->json('serverTime');
+
+    // A write that took its timestamp a second before that read but committed after it.
+    $spot = Spot::findOrFail('tabarka');
+    $spot->water = ! $spot->water;
+    $spot->setUpdatedAt(now()->subSecond());
+    $spot->save();
+
+    $ids = array_column($this->getJson('/api/v1/spots?updatedSince='.urlencode($since))->json('data'), 'id');
+    expect($ids)->toContain('tabarka');
 });
 
 it('treats updatedSince as strictly after', function () {

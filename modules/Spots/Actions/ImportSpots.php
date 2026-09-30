@@ -28,14 +28,16 @@ final class ImportSpots
 
             foreach ($rows as $row) {
                 $spot = Spot::query()->find($row['id']) ?? new Spot;
-                $spot->id = $row['id'];
-                $spot->fill(collect($row)->except('id')->all());
+                $attributes = collect($row)->except('id')->all();
 
-                if ($spot->exists && ! $spot->isDirty()) {
+                if ($spot->exists && ! $this->differs($spot, $attributes)) {
                     $counts['unchanged']++;
 
                     continue;
                 }
+
+                $spot->id = $row['id'];
+                $spot->fill($attributes);
 
                 $counts[$spot->exists ? 'updated' : 'created']++;
                 $stamp = $stamp->addMillisecond();
@@ -48,6 +50,33 @@ final class ImportSpots
 
             return $counts;
         });
+    }
+
+    /**
+     * Compares by value, ignoring key order: MySQL stores JSON objects with its
+     * own key order, so Eloquent's isDirty() would call every row changed.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function differs(Spot $spot, array $attributes): bool
+    {
+        foreach ($attributes as $key => $value) {
+            if (self::canonical($spot->getAttribute($key)) != self::canonical($value)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function canonical(mixed $value): mixed
+    {
+        if (! is_array($value)) {
+            return $value;
+        }
+        ksort($value);
+
+        return array_map(self::canonical(...), $value);
     }
 
     /** @return array<string, mixed> */

@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Modules\Spots\Actions\ImportSpots;
 use Modules\Spots\Models\Spot;
@@ -38,3 +39,16 @@ it('rejects rows that break the contract', function (array $patch) {
     'bad id' => [['id' => '../etc']],
     'unknown type' => [['type' => 'volcano']],
 ])->throws(ValidationException::class);
+
+it('sees JSON reordered by the database as unchanged', function () {
+    app(ImportSpots::class)(seedRows());
+    // MySQL stores JSON objects with keys sorted by length, then alphabetically.
+    foreach (Spot::all() as $spot) {
+        DB::table('spots')->where('id', $spot->id)->update([
+            'name' => json_encode(['ar' => $spot->name['ar'], 'en' => $spot->name['en'], 'fr' => $spot->name['fr']]),
+            'description' => json_encode(['en' => $spot->description['en'], 'fr' => $spot->description['fr'], 'ar' => $spot->description['ar']]),
+        ]);
+    }
+
+    expect(app(ImportSpots::class)(seedRows()))->toBe(['created' => 0, 'updated' => 0, 'unchanged' => 15]);
+});

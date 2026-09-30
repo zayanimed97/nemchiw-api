@@ -14,7 +14,6 @@ final class SpotsController
     {
         $validated = $request->validate(['updatedSince' => ['sometimes', 'date']]);
         $pageSize = (int) config('spots.page_size');
-        // Taken before the query so a row written during it is not skipped next time.
         $now = now();
 
         $spots = Spot::query()
@@ -32,11 +31,12 @@ final class SpotsController
         $full = $spots->count() > $pageSize;
         $spots = $spots->take($pageSize);
 
-        // The cursor is never earlier than the newest row sent: ImportSpots stamps rows
-        // a few milliseconds apart, which can put them just ahead of the clock.
-        $cursor = $spots->isEmpty() || (! $full && $spots->last()->updated_at->lessThan($now))
-            ? $now
-            : $spots->last()->updated_at;
+        // A partial page hands back a cursor a little in the past: a write that took
+        // its timestamp before this read but committed after it is sent next time
+        // instead of skipped. Clients upsert by id, so the overlap costs nothing.
+        $cursor = $full
+            ? $spots->last()->updated_at
+            : $now->subSeconds((int) config('spots.cursor_lag_seconds'));
 
         return new JsonResponse([
             'data' => SpotResource::collection($spots)->resolve(),
