@@ -64,6 +64,7 @@ it('rejects bodies over 64 KB', function () {
 });
 
 it('throttles the api group per client', function () {
+    config(['shared.api_per_minute' => 120]);
     foreach (range(1, 120) as $_) {
         $this->postJson('/api/v1/test/echo')->assertOk();
     }

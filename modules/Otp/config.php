@@ -8,10 +8,10 @@ return [
     'live_codes' => 3,
     'limits' => [
         'per_phone_per_hour' => 5,
-        'per_ip_per_hour' => 20,
+        'per_ip_per_hour' => 60, // high on purpose: carrier NAT puts many people on one IP
         // Caps SMS spend if someone pumps codes to many numbers.
         'global_per_hour' => (int) env('OTP_GLOBAL_PER_HOUR', 300),
-        'verify_per_ip_per_10_min' => 30,
+        'verify_per_ip_per_10_min' => 60,
         'per_user_attach_per_hour' => 5,
         // Wrong codes per phone (all challenges) before it is locked for 24 h.
         'failures_per_phone_per_day' => 10,

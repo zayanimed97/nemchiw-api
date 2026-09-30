@@ -49,10 +49,18 @@ Shared hosting, SSH on port 65002. The app lives **outside** `public_html`; only
    This runs the queue worker, OTP pruning, token pruning and the 03:30 database backup
    (kept in `storage/app/private/backups`, newest 14). Hostinger's own backups are the
    off-server copy.
-10. If Hostinger's CDN is on for the subdomain, client IPs arrive in a proxy header.
-    Compare the IP Laravel sees (`storage/logs`) with your own; only then configure
-    `trustProxies` for the CDN's address ranges. Never trust `*`: it lets clients forge
-    their IP and dodge the OTP limits.
+10. Check which client IP the rate limiters see. Set `EXPOSE_CLIENT_IP=true` in `.env`,
+    run `php artisan optimize`, then from your phone on mobile data and from your laptop:
+    ```bash
+    curl -s https://api.lunara-tn.com/api/v1/_client-ip
+    curl -s -H 'X-Forwarded-For: 203.0.113.9' https://api.lunara-tn.com/api/v1/_client-ip
+    ```
+    - Both must show **your** public IP (compare with any "what is my IP" site).
+    - If the second shows `203.0.113.9`, the server trusts a forgeable header: turn off
+      LiteSpeed's "Use Client IP in Header" (or ask Hostinger support) before going live.
+    - If both show a Hostinger/CDN address instead of yours, the CDN is in front: configure
+      `trustProxies` for the CDN's published ranges only. Never trust `*`.
+    Then set `EXPOSE_CLIENT_IP=false` and `php artisan optimize` again.
 
 ## Every deploy
 

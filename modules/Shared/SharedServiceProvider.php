@@ -19,7 +19,7 @@ class SharedServiceProvider extends ModuleServiceProvider
     {
         parent::boot();
 
-        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(120)
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute((int) config('shared.api_per_minute'))
             ->by($request->user('sanctum')?->getAuthIdentifier() ?? $request->ip()));
 
         if ($this->app->runningInConsole()) {
