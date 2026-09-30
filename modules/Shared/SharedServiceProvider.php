@@ -3,8 +3,10 @@
 namespace Modules\Shared;
 
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Modules\Shared\Actions\PruneExpiredCache;
 use Modules\Shared\Console\BackupDatabase;
 use Modules\Shared\Providers\ModuleServiceProvider;
 
@@ -25,5 +27,9 @@ class SharedServiceProvider extends ModuleServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([BackupDatabase::class]);
         }
+
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
+            $schedule->call(fn () => app(PruneExpiredCache::class)())->hourly()->name('cache:prune-expired')->withoutOverlapping(10);
+        });
     }
 }
