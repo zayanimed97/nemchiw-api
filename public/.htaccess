@@ -23,3 +23,11 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+Options -Indexes
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+</IfModule>
