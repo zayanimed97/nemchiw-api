@@ -8,6 +8,7 @@ use Modules\Otp\Contracts\SmsSender;
 use Modules\Otp\Models\OtpChallenge;
 use Modules\Otp\Support\OtpCode;
 use Modules\Otp\Support\OtpMessage;
+use Modules\Otp\Support\PhoneLock;
 use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
 
@@ -66,6 +67,11 @@ final class SendOtp
 
     private function guardLimits(string $phone, string $purpose): void
     {
+        $locked = PhoneLock::lockedFor($phone);
+        if ($locked !== null) {
+            throw new ApiException(ApiErrorCode::RateLimited, 'Too many wrong codes', $locked);
+        }
+
         $latest = OtpChallenge::query()->where('phone', $phone)->where('purpose', $purpose)
             ->latest('created_at')->first();
         if ($latest !== null && $latest->resend_after->isFuture()) {

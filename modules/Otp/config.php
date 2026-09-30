@@ -11,6 +11,8 @@ return [
         'global_per_hour' => (int) env('OTP_GLOBAL_PER_HOUR', 300),
         'verify_per_ip_per_10_min' => 30,
         'per_user_attach_per_hour' => 5,
+        // Wrong codes per phone (all challenges) before it is locked for 24 h.
+        'failures_per_phone_per_day' => 10,
     ],
     'sms_driver' => env('SMS_DRIVER', 'log'),
 ];

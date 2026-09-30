@@ -132,3 +132,33 @@ it('rejects malformed verify input', function (array $body) {
     [['challengeId' => '01J8Z3Q4X5Y6Z7A8B9C0D1E2F3', 'code' => '12345']],
     [['challengeId' => '01J8Z3Q4X5Y6Z7A8B9C0D1E2F3', 'code' => 'abcdef']],
 ]);
+
+it('locks a phone for a day after 10 wrong codes across challenges', function () {
+    foreach (range(1, 2) as $round) {
+        $challengeId = sendCode()->json('challengeId');
+        $wrong = $this->sms->lastCode() === '000000' ? '111111' : '000000';
+        foreach (range(1, 5) as $_) {
+            $this->postJson('/api/v1/auth/otp/verify', ['challengeId' => $challengeId, 'code' => $wrong])->assertStatus(422);
+        }
+        $this->travel(61)->seconds();
+    }
+
+    sendCode()->assertStatus(429)->assertJsonPath('code', 'rate_limited');
+    expect(sendCode()->json('retryAfter'))->toBeGreaterThan(80_000);
+
+    $this->travel(24)->hours();
+    sendCode()->assertOk();
+});
+
+it('refuses even the right code while the phone is locked', function () {
+    config(['otp.limits.failures_per_phone_per_day' => 2]);
+    $challengeId = sendCode()->json('challengeId');
+    $code = $this->sms->lastCode();
+    $wrong = $code === '000000' ? '111111' : '000000';
+
+    foreach (range(1, 2) as $_) {
+        $this->postJson('/api/v1/auth/otp/verify', ['challengeId' => $challengeId, 'code' => $wrong])->assertStatus(422);
+    }
+    $this->postJson('/api/v1/auth/otp/verify', ['challengeId' => $challengeId, 'code' => $code])
+        ->assertStatus(429)->assertJsonPath('code', 'rate_limited');
+});
