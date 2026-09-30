@@ -2,6 +2,7 @@
 
 use App\Providers\AppServiceProvider;
 use Modules\Identity\IdentityServiceProvider;
+use Modules\Otp\OtpServiceProvider;
 use Modules\Shared\SharedServiceProvider;
 use Modules\Spots\SpotsServiceProvider;
 
@@ -10,4 +11,5 @@ return [
     SharedServiceProvider::class,
     SpotsServiceProvider::class,
     IdentityServiceProvider::class,
+    OtpServiceProvider::class,
 ];
