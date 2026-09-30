@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Modules\Identity\Models\User;
 use Modules\Otp\Contracts\SmsSender;
 use Modules\Otp\Testing\FakeSmsSender;
@@ -87,18 +88,46 @@ it('expires codes after 5 minutes', function () {
         ->assertStatus(422)->assertJsonPath('code', 'code_expired');
 });
 
-it('makes you wait 60 s between codes and kills the old one', function () {
-    $first = sendCode()->json('challengeId');
-    $firstCode = $this->sms->lastCode();
+it('makes you wait 60 s between codes', function () {
+    sendCode()->assertOk();
 
     sendCode()->assertStatus(429)->assertJsonPath('code', 'rate_limited');
     expect(sendCode()->json('retryAfter'))->toBeLessThanOrEqual(60)->toBeGreaterThan(0);
 
     $this->travel(61)->seconds();
     sendCode()->assertOk();
+});
+
+it('keeps the code someone is typing alive when another is requested', function () {
+    $first = sendCode()->json('challengeId');
+    $firstCode = $this->sms->lastCode();
+    $this->travel(61)->seconds();
+    sendCode()->assertOk();
+
+    $this->postJson('/api/v1/auth/otp/verify', ['challengeId' => $first, 'code' => $firstCode])->assertOk();
+});
+
+it('keeps at most 3 live codes per phone', function () {
+    $first = sendCode()->json('challengeId');
+    $firstCode = $this->sms->lastCode();
+    foreach (range(1, 3) as $_) {
+        $this->travel(61)->seconds();
+        sendCode()->assertOk();
+    }
 
     $this->postJson('/api/v1/auth/otp/verify', ['challengeId' => $first, 'code' => $firstCode])
         ->assertStatus(422)->assertJsonPath('code', 'code_expired');
+});
+
+it('warns once when half the hourly SMS budget is spent', function () {
+    config(['otp.limits.global_per_hour' => 4]);
+    Log::spy();
+
+    foreach (['+21620000001', '+21620000002', '+21620000003'] as $phone) {
+        sendCode($phone)->assertOk();
+    }
+
+    Log::shouldHaveReceived('warning')->once()->withArgs(fn ($message) => str_contains($message, 'SMS budget'));
 });
 
 it('caps codes per phone per hour', function () {

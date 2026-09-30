@@ -4,6 +4,8 @@ return [
     'code_ttl' => 300,
     'resend_after' => 60,
     'max_attempts' => 5,
+    // Codes per phone that stay usable at once (a resend keeps the older ones).
+    'live_codes' => 3,
     'limits' => [
         'per_phone_per_hour' => 5,
         'per_ip_per_hour' => 20,

@@ -3,6 +3,7 @@
 namespace Modules\Otp\Actions;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Modules\Otp\Contracts\SmsSender;
 use Modules\Otp\Models\OtpChallenge;
@@ -31,9 +32,13 @@ final class SendOtp
             $this->guardLimits($phone, $purpose);
 
             $now = now();
-            // One live code per phone and purpose: fewer valid codes, fewer lucky guesses.
+            // A resend must not kill the code someone is typing (anyone can request a
+            // code for any phone), but a few live codes at most keeps guessing odds low.
+            $keep = OtpChallenge::query()->where('phone', $phone)->where('purpose', $purpose)
+                ->whereNull('consumed_at')->where('expires_at', '>', $now)
+                ->latest('created_at')->limit((int) config('otp.live_codes') - 1)->pluck('id');
             OtpChallenge::query()->where('phone', $phone)->where('purpose', $purpose)
-                ->whereNull('consumed_at')->update(['consumed_at' => $now]);
+                ->whereNull('consumed_at')->whereNotIn('id', $keep)->update(['consumed_at' => $now]);
 
             $code = OtpCode::generate();
             $challenge = new OtpChallenge;
@@ -48,7 +53,10 @@ final class SendOtp
             ])->save();
 
             RateLimiter::hit("otp:phone:{$phone}", 3600);
-            RateLimiter::hit('otp:global', 3600);
+            $spent = RateLimiter::hit('otp:global', 3600);
+            if ($spent === (int) ceil(config('otp.limits.global_per_hour') / 2)) {
+                Log::warning('OTP: half of the hourly SMS budget is spent; check for SMS pumping');
+            }
             // After the response is flushed, never through the queue: the code is never
             // stored in plain text, and the cron-driven worker on shared hosting would
             // delay it by up to a minute.
