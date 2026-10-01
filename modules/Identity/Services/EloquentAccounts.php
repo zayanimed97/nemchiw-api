@@ -38,6 +38,11 @@ final class EloquentAccounts implements Accounts
         return $user->id;
     }
 
+    public function profile(string $userId): array
+    {
+        return ProfileResource::make(User::query()->findOrFail($userId))->resolve();
+    }
+
     public function authResponse(string $userId, bool $isNew): array
     {
         return $this->respond(User::query()->findOrFail($userId), $isNew);

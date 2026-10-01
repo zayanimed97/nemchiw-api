@@ -5,6 +5,7 @@ namespace Modules\Identity\Http;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Identity\Contracts\LinkedProviders;
+use Modules\Identity\Contracts\ProfilePhotos;
 use Modules\Identity\Models\User;
 use Modules\Shared\Support\Iso;
 
@@ -26,7 +27,7 @@ final class ProfileResource extends JsonResource
             'birthDate' => $this->birth_date?->format('Y-m-d'),
             'phone' => $this->phone,
             'email' => $this->email,
-            'photo' => null, // plan 3 (Media) fills this
+            'photo' => app(ProfilePhotos::class)->ownerView($this->id),
             'level' => $this->level,
             'skills' => $this->skills ?? [],
             'bio' => $this->bio,

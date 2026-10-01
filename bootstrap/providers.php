@@ -2,6 +2,7 @@
 
 use App\Providers\AppServiceProvider;
 use Modules\Identity\IdentityServiceProvider;
+use Modules\Media\MediaServiceProvider;
 use Modules\Otp\OtpServiceProvider;
 use Modules\Shared\SharedServiceProvider;
 use Modules\SocialAuth\SocialAuthServiceProvider;
@@ -14,4 +15,5 @@ return [
     IdentityServiceProvider::class,
     OtpServiceProvider::class,
     SocialAuthServiceProvider::class,
+    MediaServiceProvider::class,
 ];

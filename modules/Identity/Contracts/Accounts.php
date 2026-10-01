@@ -29,6 +29,13 @@ interface Accounts
      */
     public function authResponse(string $userId, bool $isNew): array;
 
+    /**
+     * The owner's view of an account (Profile in the app's contract).
+     *
+     * @return array<string, mixed>
+     */
+    public function profile(string $userId): array;
+
     /** The id of the account holding this phone, if any. */
     public function ownerOfPhone(string $phone): ?string;
 

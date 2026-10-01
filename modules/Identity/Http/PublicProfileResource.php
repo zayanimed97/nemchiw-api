@@ -4,6 +4,7 @@ namespace Modules\Identity\Http;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Identity\Contracts\ProfilePhotos;
 use Modules\Identity\Models\User;
 use Modules\Shared\Support\Iso;
 
@@ -30,7 +31,7 @@ final class PublicProfileResource extends JsonResource
             'joinedAt' => Iso::format($this->created_at),
             'campsCount' => 0,
             'age' => $this->birth_date?->age,
-            'photo' => null, // plan 3: { url, verified } only when verified
+            'photo' => app(ProfilePhotos::class)->publicView($this->id),
         ];
     }
 }
