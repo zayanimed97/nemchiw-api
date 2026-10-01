@@ -27,7 +27,20 @@ final class EloquentAccounts implements Accounts
             }
         }
 
-        return ['token' => $this->issueToken($user), 'profile' => ProfileResource::make($user)->resolve(), 'isNew' => $isNew];
+        return $this->respond($user, $isNew);
+    }
+
+    public function createAccount(?string $firstName, ?string $lastName, ?string $email): string
+    {
+        $user = new User;
+        $user->forceFill(['first_name' => $firstName, 'last_name' => $lastName, 'email' => $email])->save();
+
+        return $user->id;
+    }
+
+    public function authResponse(string $userId, bool $isNew): array
+    {
+        return $this->respond(User::query()->findOrFail($userId), $isNew);
     }
 
     public function ownerOfPhone(string $phone): ?string
@@ -50,6 +63,12 @@ final class EloquentAccounts implements Accounts
         }
 
         return ProfileResource::make($user)->resolve();
+    }
+
+    /** @return array{token: string, profile: array<string, mixed>, isNew: bool} */
+    private function respond(User $user, bool $isNew): array
+    {
+        return ['token' => $this->issueToken($user), 'profile' => ProfileResource::make($user)->resolve(), 'isNew' => $isNew];
     }
 
     private function issueToken(User $user): string

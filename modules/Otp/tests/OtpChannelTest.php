@@ -3,9 +3,12 @@
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Modules\Otp\Channels\LogOtpSender;
 use Modules\Otp\Contracts\OtpSender;
 use Modules\Otp\Models\OtpChallenge;
+use Modules\Shared\Errors\ApiErrorCode;
+use Modules\Shared\Errors\ApiException;
 
 function useWhatsApp(): void
 {
@@ -96,4 +99,24 @@ it('refuses to start without WhatsApp credentials', function () {
     config(['otp.whatsapp.token' => '']);
 
     expect(fn () => app(OtpSender::class))->toThrow(RuntimeException::class);
+});
+
+it('charges the hourly budget before sending, and refunds it when the send fails', function () {
+    $seen = null;
+    app()->instance(OtpSender::class, new class($seen) implements OtpSender
+    {
+        public function __construct(public ?int &$seen) {}
+
+        public function send(string $phone, string $code, string $locale): void
+        {
+            $this->seen = RateLimiter::attempts('otp:global');
+            throw new ApiException(ApiErrorCode::ProviderUnavailable, 'down');
+        }
+    });
+
+    $this->postJson('/api/v1/auth/otp/send', ['phone' => '+21620123456', 'locale' => 'fr'])->assertStatus(503);
+
+    expect($seen)->toBe(1);
+    expect(RateLimiter::attempts('otp:global'))->toBe(0);
+    expect(RateLimiter::attempts('otp:phone:+21620123456'))->toBe(0);
 });

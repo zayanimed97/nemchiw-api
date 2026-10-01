@@ -4,6 +4,7 @@ namespace Modules\Identity\Http;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Identity\Contracts\LinkedProviders;
 use Modules\Identity\Models\User;
 use Modules\Shared\Support\Iso;
 
@@ -34,7 +35,7 @@ final class ProfileResource extends JsonResource
                 : ['governorate' => $this->home_governorate, 'city' => $this->home_city],
             'car' => $this->car_seats === null ? null : ['seats' => $this->car_seats],
             'emergencyContact' => $this->emergency_contact,
-            'providers' => [], // plan 2 (SocialAuth) fills this
+            'providers' => app(LinkedProviders::class)->for($this->id),
             'joinedAt' => Iso::format($this->created_at),
             'campsCount' => 0, // trips do not exist yet
         ];
