@@ -131,3 +131,23 @@ it('deletes the photo with the account', function () {
     expect(Photo::count())->toBe(0);
     expect(Storage::disk('photos')->exists($path))->toBeFalse();
 });
+
+it('refuses images beyond 4096 px a side or 16 megapixels', function (int $width, int $height) {
+    upload(Images::png($width, $height), 'photo.png')->assertStatus(422);
+})->with(['too wide' => [4097, 100], 'too many pixels' => [4096, 4000]]);
+
+it('keeps no file when saving the photo fails', function () {
+    Photo::saving(fn () => throw new RuntimeException('database down'));
+
+    upload(Images::jpeg())->assertStatus(500);
+
+    expect(Storage::disk('photos')->allFiles())->toBe([]);
+});
+
+it('allows 10 uploads an hour per person', function () {
+    foreach (range(1, 10) as $_) {
+        upload(Images::jpeg(100, 100))->assertOk();
+        $this->app['auth']->forgetGuards();
+    }
+    upload(Images::jpeg(100, 100))->assertStatus(429);
+});

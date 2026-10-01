@@ -1,10 +1,12 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\Identity\Models\User;
 use Modules\Media\Contracts\Photos;
 use Modules\Media\Services\PhotoStore;
 use Modules\Media\Testing\Images;
+use Modules\Verification\Actions\PruneWebhookEvents;
 use Modules\Verification\Models\VerificationSession;
 
 beforeEach(function () {
@@ -122,4 +124,46 @@ it('ignores a late decision for a photo that has been replaced', function () {
 
     deliver(diditEvent('Approved'))->assertOk();
     expect(photoStatus())->toBe('unverified');
+});
+
+it('keeps a badge earned by a newer session when an older one is abandoned', function () {
+    $this->travel(1)->seconds();
+    (new VerificationSession)->forceFill(['session_id' => 'sess-2', 'user_id' => $this->user->id, 'photo_id' => $this->photoId])->save();
+
+    deliver(diditEvent('Approved', eventId: 'evt-b', session: 'sess-2'))->assertOk();
+    deliver(diditEvent('Abandoned', eventId: 'evt-a', session: 'sess-1'))->assertOk();
+    deliver(diditEvent('Declined', eventId: 'evt-a2', session: 'sess-1'))->assertOk();
+
+    expect(photoStatus())->toBe('verified');
+});
+
+it('ignores a retried earlier status that arrives after the decision', function () {
+    deliver(diditEvent('Approved', eventId: 'evt-2'))->assertOk();
+    deliver(diditEvent('In Progress', eventId: 'evt-1'))->assertOk();
+
+    expect(photoStatus())->toBe('verified');
+});
+
+it('acts only on session status updates', function () {
+    $payload = diditEvent('Approved');
+    $payload['webhook_type'] = 'data.updated';
+
+    deliver($payload)->assertOk();
+    expect(photoStatus())->toBe('unverified');
+});
+
+it('accepts large signed decisions', function () {
+    $payload = diditEvent('Approved', ['liveness_checks' => [['status' => 'Approved', 'blob' => str_repeat('x', 100_000)]]]);
+    deliver($payload)->assertOk();
+    expect(photoStatus())->toBe('verified');
+});
+
+it('prunes webhook events older than a day', function () {
+    deliver(diditEvent('In Progress', eventId: 'old'))->assertOk();
+    $this->travel(25)->hours();
+    deliver(diditEvent('Approved', eventId: 'new'))->assertOk();
+
+    app(PruneWebhookEvents::class)();
+
+    expect(DB::table('webhook_events')->pluck('event_id')->all())->toBe(['new']);
 });

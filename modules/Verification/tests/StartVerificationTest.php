@@ -3,11 +3,15 @@
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\Identity\Models\User;
 use Modules\Media\Contracts\Photos;
 use Modules\Media\Testing\Images;
+use Modules\Shared\Errors\ApiErrorCode;
+use Modules\Shared\Errors\ApiException;
+use Modules\Verification\Contracts\IdentityVerifier;
 use Modules\Verification\Models\VerificationSession;
 
 beforeEach(function () {
@@ -61,7 +65,7 @@ it('creates a Didit session with the stored photo and returns its token', functi
             && $body['workflow_id'] === 'wf-123'
             && $body['vendor_data'] === test()->user->id
             && $body['language'] === 'ar'
-            && base64_decode($body['portrait_image']) === app(Photos::class)->jpeg($photoId);
+            && base64_decode($body['portrait_image']) === app(Photos::class)->portrait($photoId);
     });
     expect(VerificationSession::sole())->session_id->toBe('11111111-2222-3333-4444-555555555555')
         ->photo_id->toBe($photoId)->user_id->toBe($this->user->id);
@@ -132,4 +136,62 @@ it('allows 5 checks a day per person', function () {
         $this->app['auth']->forgetGuards();
     }
     start()->assertStatus(429)->assertJsonPath('code', 'rate_limited');
+});
+
+it('sends Didit a portrait no larger than 1024 px', function () {
+    test()->withToken(test()->token)->post('/api/v1/me/photo', ['photo' => Images::upload(Images::jpeg(1280, 1600))], ['Accept' => 'application/json'])->assertOk();
+    app('auth')->forgetGuards();
+    diditAccepts();
+
+    start()->assertOk();
+
+    Http::assertSent(function (Request $request) {
+        [$width, $height] = getimagesizefromstring(base64_decode($request->data()['portrait_image']));
+
+        return max($width, $height) === 1024;
+    });
+});
+
+it('counts the check before calling Didit and refunds it on failure', function () {
+    withPhoto();
+    $seen = null;
+    app()->instance(IdentityVerifier::class, new class($seen) implements IdentityVerifier
+    {
+        public function __construct(public ?int &$seen) {}
+
+        public function createSession(string $userId, string $portraitJpeg, string $language): array
+        {
+            $this->seen = RateLimiter::attempts("verification:{$userId}");
+            throw new ApiException(ApiErrorCode::ProviderUnavailable, 'down');
+        }
+
+        public function deleteSession(string $sessionId): void {}
+    });
+
+    start()->assertStatus(503);
+
+    expect($seen)->toBe(1);
+    expect(RateLimiter::attempts('verification:'.test()->user->id))->toBe(0);
+});
+
+it('stops all checks for the day past the global budget', function () {
+    config(['verification.global_sessions_per_day' => 1]);
+    withPhoto();
+    diditAccepts();
+    start()->assertOk();
+
+    $other = User::factory()->create();
+    test()->token = tokenFor($other);
+    test()->user = $other;
+    app('auth')->forgetGuards();
+    withPhoto();
+    start()->assertStatus(429);
+});
+
+it('reads the language case-insensitively', function () {
+    withPhoto();
+    diditAccepts();
+    start(['Accept-Language' => 'AR-tn'])->assertOk();
+
+    Http::assertSent(fn (Request $request) => $request->data()['language'] === 'ar');
 });

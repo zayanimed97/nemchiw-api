@@ -18,6 +18,18 @@ final class DecisionMapper
         };
     }
 
+    /** How far along a session is; statuses never move backwards. */
+    public static function rank(string $status): int
+    {
+        return match ($status) {
+            'Not Started' => 0,
+            'In Progress' => 1,
+            'Awaiting User', 'Resubmitted', 'In Review' => 2,
+            'Approved', 'Declined', 'Abandoned', 'Expired', 'Kyc Expired' => 3,
+            default => 0,
+        };
+    }
+
     /** Biometric Authentication: approve only when every liveness check and face match approved. */
     private static function allApproved(?array $decision): bool
     {

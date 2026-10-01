@@ -13,13 +13,14 @@ return new class extends Migration
             $table->ulid('user_id')->index();
             $table->ulid('photo_id');
             $table->string('status', 32)->default('Not Started');
-            $table->timestamps();
+            $table->timestamps(3);
+            $table->index(['photo_id', 'created_at']);
         });
 
         Schema::create('webhook_events', function (Blueprint $table) {
             $table->string('event_id', 64)->primary();
             $table->string('session_id', 64)->nullable();
-            $table->timestamp('received_at');
+            $table->timestamp('received_at')->index();
         });
     }
 

@@ -12,7 +12,7 @@ final class StartVerificationController
 
     public function __invoke(Request $request, StartVerification $start): JsonResponse
     {
-        $language = substr((string) $request->header('Accept-Language', ''), 0, 2);
+        $language = strtolower(substr((string) $request->header('Accept-Language', ''), 0, 2));
 
         return new JsonResponse($start(
             (string) $request->user()->getAuthIdentifier(),

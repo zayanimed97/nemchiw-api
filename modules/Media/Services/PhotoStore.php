@@ -8,10 +8,13 @@ use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use Modules\Identity\Contracts\ProfilePhotos;
 use Modules\Media\Contracts\Photos;
+use Modules\Media\Images\Reencoder;
 use Modules\Media\Models\Photo;
 
 final class PhotoStore implements Photos, ProfilePhotos
 {
+    public function __construct(private readonly Reencoder $reencoder) {}
+
     /** Saves a clean JPEG as the person's photo, replacing (and deleting) the previous one. */
     public function replace(string $userId, string $jpeg): Photo
     {
@@ -20,13 +23,20 @@ final class PhotoStore implements Photos, ProfilePhotos
         $path = $photo->id.'.jpg';
         $this->disk()->put($path, $jpeg);
 
-        $previous = DB::transaction(function () use ($photo, $userId, $path) {
-            $previous = Photo::query()->where('user_id', $userId)->lockForUpdate()->first();
-            $previous?->delete();
-            $photo->forceFill(['user_id' => $userId, 'path' => $path, 'status' => 'unverified'])->save();
+        try {
+            $previous = DB::transaction(function () use ($photo, $userId, $path) {
+                $previous = Photo::query()->where('user_id', $userId)->lockForUpdate()->first();
+                $previous?->delete();
+                $photo->forceFill(['user_id' => $userId, 'path' => $path, 'status' => 'unverified'])->save();
 
-            return $previous;
-        });
+                return $previous;
+            });
+        } catch (\Throwable $e) {
+            // No row points at the file: remove it, or account deletion could never find it.
+            $this->disk()->delete($path);
+
+            throw $e;
+        }
 
         if ($previous !== null) {
             $this->disk()->delete($previous->path);
@@ -51,9 +61,9 @@ final class PhotoStore implements Photos, ProfilePhotos
         return $photo === null ? null : ['id' => $photo->id, 'status' => $photo->status];
     }
 
-    public function jpeg(string $photoId): string
+    public function portrait(string $photoId): string
     {
-        return (string) $this->disk()->get(Photo::query()->findOrFail($photoId)->path);
+        return $this->reencoder->toJpeg((string) $this->disk()->get(Photo::query()->findOrFail($photoId)->path), 1024);
     }
 
     public function setStatus(string $photoId, string $status): void

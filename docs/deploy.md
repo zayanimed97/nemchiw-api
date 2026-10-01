@@ -6,7 +6,9 @@ Shared hosting, SSH on port 65002. The app lives **outside** `public_html`; only
 ## One-time setup
 
 1. hPanel → Advanced → PHP Configuration: PHP **8.3 or newer** for the site.
-   Extensions: pdo_mysql, mbstring, openssl, gd, fileinfo, bcmath, intl.
+   Extensions: pdo_mysql, mbstring, openssl, gd, exif, fileinfo, bcmath, intl.
+   PHP options: `memory_limit` ≥ 256M (photo decoding), `upload_max_filesize` ≥ 6M,
+   `post_max_size` ≥ 8M, `max_execution_time` ≥ 30.
 2. hPanel → Databases → MySQL: create a database and a user with a long random password.
 3. hPanel → Advanced → SSH Access: enable it and add your public key.
 4. On the server:

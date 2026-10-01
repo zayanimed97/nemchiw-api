@@ -13,20 +13,24 @@ use Modules\Shared\Errors\ApiException;
  */
 final class Reencoder
 {
-    private const MAX_PIXELS = 40_000_000;
+    // Far above what the app sends (1080 × 1350) yet bounded: GD needs ~5 bytes a pixel
+    // and more while scaling, and shared hosting gives PHP a few hundred MB at most.
+    private const MAX_SIDE = 4096;
+
+    private const MAX_PIXELS = 16_000_000;
 
     private const LONG_SIDE = 1600;
 
     private const QUALITY = 85;
 
-    public function toJpeg(string $bytes): string
+    public function toJpeg(string $bytes, int $longSide = self::LONG_SIDE): string
     {
         $info = @getimagesizefromstring($bytes);
         if ($info === false || ! in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG], true)) {
             throw self::invalid();
         }
         [$width, $height] = $info;
-        if ($width < 1 || $height < 1 || $width * $height > self::MAX_PIXELS) {
+        if ($width < 1 || $height < 1 || max($width, $height) > self::MAX_SIDE || $width * $height > self::MAX_PIXELS) {
             throw self::invalid();
         }
 
@@ -35,15 +39,16 @@ final class Reencoder
             throw self::invalid();
         }
 
-        $image = $this->upright($image, $bytes, $info[2]);
-        if (max(imagesx($image), imagesy($image)) > self::LONG_SIDE) {
-            $landscape = imagesx($image) >= imagesy($image);
+        // Scale first, then rotate: rotating the full-size image would double the memory.
+        if (max($width, $height) > $longSide) {
+            $landscape = $width >= $height;
             $image = imagescale(
                 $image,
-                $landscape ? self::LONG_SIDE : (int) round(imagesx($image) * self::LONG_SIDE / imagesy($image)),
-                $landscape ? (int) round(imagesy($image) * self::LONG_SIDE / imagesx($image)) : self::LONG_SIDE,
+                $landscape ? $longSide : (int) round($width * $longSide / $height),
+                $landscape ? (int) round($height * $longSide / $width) : $longSide,
             );
         }
+        $image = $this->upright($image, $bytes, $info[2]);
 
         ob_start();
         imagejpeg($image, null, self::QUALITY);

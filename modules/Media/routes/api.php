@@ -7,6 +7,6 @@ use Modules\Shared\Http\LimitBodySize;
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('me/photo', [PhotoController::class, 'store'])
         ->withoutMiddleware(LimitBodySize::class)
-        ->middleware(LimitBodySize::class.':'.config('media.max_body_bytes'));
+        ->middleware([LimitBodySize::class.':'.config('media.max_body_bytes'), 'throttle:photo-uploads']);
     Route::get('photos/{photo}', [PhotoController::class, 'show'])->where('photo', '[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}');
 });

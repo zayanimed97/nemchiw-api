@@ -32,15 +32,29 @@ final class StartVerification
             throw new ApiException(ApiErrorCode::Validation, 'This photo is already verified');
         }
 
-        $key = "verification:{$userId}";
-        $max = (int) config('verification.sessions_per_day');
-        if (RateLimiter::tooManyAttempts($key, $max)) {
-            throw new ApiException(ApiErrorCode::RateLimited, 'Too many checks today', RateLimiter::availableIn($key));
+        // Each check costs money. Slots are taken before calling Didit (so parallel
+        // requests cannot all slip under the cap) and given back if the call fails.
+        $budgets = [
+            "verification:{$userId}" => (int) config('verification.sessions_per_day'),
+            'verification:global' => (int) config('verification.global_sessions_per_day'),
+        ];
+        $taken = [];
+        try {
+            foreach ($budgets as $key => $max) {
+                $taken[] = $key;
+                if (RateLimiter::increment($key, 86_400) > $max) {
+                    throw new ApiException(ApiErrorCode::RateLimited, 'Too many checks today', RateLimiter::availableIn($key));
+                }
+            }
+
+            $session = $this->verifier->createSession($userId, $this->photos->portrait($photo['id']), $language);
+        } catch (\Throwable $e) {
+            foreach ($taken as $key) {
+                RateLimiter::decrement($key, 86_400);
+            }
+
+            throw $e;
         }
-
-        $session = $this->verifier->createSession($userId, $this->photos->jpeg($photo['id']), $language);
-
-        RateLimiter::hit($key, 86_400);
         (new VerificationSession)->forceFill([
             'session_id' => $session['sessionId'],
             'user_id' => $userId,

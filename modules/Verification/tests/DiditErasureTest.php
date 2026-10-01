@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Modules\Identity\Models\User;
 use Modules\Shared\Errors\ApiException;
@@ -46,5 +47,14 @@ it('treats an already deleted session as done', function () {
 it('fails the job so the queue retries when Didit is down', function () {
     Http::fake(['verification.didit.me/*' => Http::response('oops', 503)]);
     expect(fn () => app()->call([new EraseDiditSession('sess-1'), 'handle']))->toThrow(ApiException::class);
-    expect((new EraseDiditSession('sess-1'))->tries)->toBeGreaterThanOrEqual(10);
+    expect((new EraseDiditSession('sess-1'))->retryUntil()->greaterThan(now()->addDays(6)))->toBeTrue();
+});
+
+it('keeps retrying for a week and reports when it finally gives up', function () {
+    $job = new EraseDiditSession('sess-1');
+    expect($job->retryUntil()->greaterThan(now()->addDays(6)))->toBeTrue();
+
+    Log::spy();
+    $job->failed(new RuntimeException('down'));
+    Log::shouldHaveReceived('error')->once();
 });
