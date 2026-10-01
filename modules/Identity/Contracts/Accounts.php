@@ -15,6 +15,20 @@ interface Accounts
      */
     public function signInWithPhone(string $phone): array;
 
+    /**
+     * Creates an empty account with optional profile hints (already cleaned by the caller).
+     *
+     * @return string the new user id
+     */
+    public function createAccount(?string $firstName, ?string $lastName, ?string $email): string;
+
+    /**
+     * Signs an existing account in: a fresh token plus the owner profile.
+     *
+     * @return array{token: string, profile: array<string, mixed>, isNew: bool}
+     */
+    public function authResponse(string $userId, bool $isNew): array;
+
     /** The id of the account holding this phone, if any. */
     public function ownerOfPhone(string $phone): ?string;
 

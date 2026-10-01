@@ -38,6 +38,10 @@ Shared hosting, SSH on port 65002. The app lives **outside** `public_html`; only
    WHATSAPP_PHONE_NUMBER_ID=…   # from WhatsApp Manager → Phone numbers
    WHATSAPP_TEMPLATE=nemchiw_code
    WHATSAPP_LANG_EN=en          # the language code the English template was approved with
+   GOOGLE_CLIENT_IDS=…          # the app's Google *web* client id (what Google puts in `aud`)
+   APPLE_CLIENT_IDS=tn.nemchiw.app
+   FACEBOOK_APP_ID=…
+   FACEBOOK_APP_SECRET=…        # Facebook app → Settings → Basic (never commit it)
    ```
    Then `chmod 600 .env`.
 6. Point the subdomain at `public/`. Find the subdomain's folder in hPanel
