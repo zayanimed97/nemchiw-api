@@ -49,8 +49,6 @@ Shared hosting, SSH on port 65002. The app lives **outside** `public_html`; only
    In the Didit console, set the webhook URL to `https://api.lunara-tn.com/api/v1/webhooks/didit`
    (session status updates). Account deletion erases sessions at Didit through the queue, so the
    cron below must be running.
-   ```dotenv
-   ```
    Then `chmod 600 .env`.
 6. Point the subdomain at `public/`. Find the subdomain's folder in hPanel
    (for example `~/domains/lunara-tn.com/public_html/api`), then:
