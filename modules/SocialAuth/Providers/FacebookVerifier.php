@@ -4,6 +4,7 @@ namespace Modules\SocialAuth\Providers;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
 use Modules\SocialAuth\Tokens\IdTokenVerifier;
@@ -44,6 +45,12 @@ final class FacebookVerifier implements ProviderVerifier
 
     private function accessToken(string $token, string $appId): ProviderIdentity
     {
+        // Facebook access tokens are long alphanumeric strings; anything else is refused
+        // here rather than costing a Graph call (and our app's Graph rate limit).
+        if (preg_match('/^[A-Za-z0-9]{20,512}$/', $token) !== 1) {
+            throw IdTokenVerifier::invalid();
+        }
+
         $secret = (string) config('social_auth.facebook.app_secret');
         if ($appId === '' || $secret === '') {
             throw new ApiException(ApiErrorCode::ProviderUnavailable, 'Sign-in provider not configured');
@@ -59,7 +66,14 @@ final class FacebookVerifier implements ProviderVerifier
             throw new ApiException(ApiErrorCode::ProviderUnavailable, 'Sign-in provider unreachable');
         }
 
-        if ($response->serverError()) {
+        // A top-level error is about *our* app token (wrong secret, rate limit), not the
+        // person's token: that is our problem to fix, so say unavailable and log it.
+        if ($response->serverError() || $response->json('error') !== null) {
+            Log::warning('Facebook sign-in: Graph refused our app', [
+                'status' => $response->status(),
+                'meta_code' => $response->json('error.code'),
+            ]);
+
             throw new ApiException(ApiErrorCode::ProviderUnavailable, 'Sign-in provider unavailable');
         }
 

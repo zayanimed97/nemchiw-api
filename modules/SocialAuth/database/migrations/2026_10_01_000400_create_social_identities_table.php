@@ -12,7 +12,11 @@ return new class extends Migration
             $table->id();
             $table->ulid('user_id')->index();
             $table->string('provider', 16);
-            $table->string('provider_user_id', 191);
+            $provider = $table->string('provider_user_id', 191);
+            if (Schema::getConnection()->getDriverName() === 'mysql') {
+                // Exact, case-sensitive matching: 'abc' and 'ABC' are different people.
+                $provider->collation('utf8mb4_bin');
+            }
             $table->timestamps();
             $table->unique(['provider', 'provider_user_id']);
         });

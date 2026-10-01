@@ -11,6 +11,7 @@ use Modules\Otp\Support\OtpCode;
 use Modules\Otp\Support\PhoneLock;
 use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
+use Throwable;
 
 final class SendOtp
 {
@@ -33,9 +34,18 @@ final class SendOtp
             $challenge = new OtpChallenge;
             $challenge->id = $challenge->newUniqueId();
 
-            // Sent before anything is saved or charged: if WhatsApp refuses, the person
-            // gets provider_unavailable now and can simply try again.
-            $this->sender->send($phone, $code, $locale);
+            // Charged before sending, so parallel sends cannot overshoot the budget while
+            // waiting on WhatsApp; refunded if the send fails. Nothing is saved until it works.
+            RateLimiter::hit("otp:phone:{$phone}", 3600);
+            $spent = RateLimiter::hit('otp:global', 3600);
+            try {
+                $this->sender->send($phone, $code, $locale);
+            } catch (Throwable $e) {
+                RateLimiter::decrement("otp:phone:{$phone}", 3600);
+                RateLimiter::decrement('otp:global', 3600);
+
+                throw $e;
+            }
 
             // A resend must not kill the code someone is typing (anyone can request a
             // code for any phone), but a few live codes at most keeps guessing odds low.
@@ -54,8 +64,6 @@ final class SendOtp
                 'resend_after' => $now->addSeconds((int) config('otp.resend_after')),
             ])->save();
 
-            RateLimiter::hit("otp:phone:{$phone}", 3600);
-            $spent = RateLimiter::hit('otp:global', 3600);
             if ($spent === (int) ceil(config('otp.limits.global_per_hour') / 2)) {
                 Log::warning('OTP: half of the hourly message budget is spent; check for message pumping');
             }

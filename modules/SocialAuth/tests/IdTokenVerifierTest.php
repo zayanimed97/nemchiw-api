@@ -126,3 +126,24 @@ it('is unavailable when the provider keys cannot be fetched', function (Closure 
     'error' => [fn () => fn () => Http::response('oops', 500)],
     'not a key set' => [fn () => fn () => Http::response(['nope' => true])],
 ]);
+
+it('keeps the cached keys when a refetch fails', function () {
+    Http::fake([JWKS_URL => Http::sequence()->push(TokenFactory::jwks())->push('down', 500)]);
+
+    verifyToken(TokenFactory::sign(claims()));
+    expectApiError(fn () => verifyToken(TokenFactory::sign(claims(), 'made-up')), 'unauthenticated');
+    expect(verifyToken(TokenFactory::sign(claims(['sub' => 'user-2'])))['sub'])->toBe('user-2');
+
+    Http::assertSentCount(2);
+});
+
+it('backs off for 30 s after the keys could not be fetched', function () {
+    Http::fake([JWKS_URL => Http::sequence()->push('down', 500)->push(TokenFactory::jwks())]);
+
+    expectApiError(fn () => verifyToken(TokenFactory::sign(claims())), 'provider_unavailable');
+    expectApiError(fn () => verifyToken(TokenFactory::sign(claims())), 'provider_unavailable');
+    Http::assertSentCount(1);
+
+    $this->travel(31)->seconds();
+    expect(verifyToken(TokenFactory::sign(claims()))['sub'])->toBe('user-1');
+});

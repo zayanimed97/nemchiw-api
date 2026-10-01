@@ -18,29 +18,52 @@ use Throwable;
  */
 final class JwksKeys
 {
+    private const BACKOFF_SECONDS = 30;
+
     /** @return array<string, Key> keyed by kid, RS256 only */
     public function keys(string $url, string $kid): array
     {
-        $keys = $this->load($url, fresh: false);
+        $key = $this->cacheKey($url);
+        $jwks = Cache::get($key);
+        if (! is_array($jwks)) {
+            $jwks = $this->fetchOrBackOff($url);
+            Cache::put($key, $jwks, (int) config('social_auth.jwks_ttl'));
+        }
+        $keys = JWK::parseKeySet($jwks, 'RS256');
 
-        if (! isset($keys[$kid]) && Cache::add($this->cacheKey($url).':cooldown', true, (int) config('social_auth.jwks_refresh_cooldown'))) {
-            $keys = $this->load($url, fresh: true);
+        if (! isset($keys[$kid]) && Cache::add($key.':cooldown', true, (int) config('social_auth.jwks_refresh_cooldown'))) {
+            try {
+                $fresh = $this->fetchOrBackOff($url);
+                Cache::put($key, $fresh, (int) config('social_auth.jwks_ttl'));
+                $keys = JWK::parseKeySet($fresh, 'RS256');
+            } catch (ApiException) {
+                // Keep the keys we have: a failed refetch must not break valid tokens.
+            }
         }
 
         return $keys;
     }
 
-    /** @return array<string, Key> */
-    private function load(string $url, bool $fresh): array
+    /**
+     * After a failure, answer "unavailable" for a short while without calling out, so a
+     * provider outage does not turn into one slow outbound request per sign-in.
+     *
+     * @return array{keys: list<array<string, mixed>>}
+     */
+    private function fetchOrBackOff(string $url): array
     {
-        $key = $this->cacheKey($url);
-        if ($fresh) {
-            Cache::forget($key);
+        $down = $this->cacheKey($url).':down';
+        if (Cache::has($down)) {
+            throw new ApiException(ApiErrorCode::ProviderUnavailable, 'Sign-in provider unavailable');
         }
 
-        $jwks = Cache::remember($key, (int) config('social_auth.jwks_ttl'), fn () => $this->fetch($url));
+        try {
+            return $this->fetch($url);
+        } catch (ApiException $e) {
+            Cache::put($down, true, self::BACKOFF_SECONDS);
 
-        return JWK::parseKeySet($jwks, 'RS256');
+            throw $e;
+        }
     }
 
     /** @return array{keys: list<array<string, mixed>>} */

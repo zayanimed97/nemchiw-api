@@ -3,6 +3,7 @@
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Modules\Shared\Errors\ApiException;
 use Modules\SocialAuth\Providers\AppleVerifier;
 use Modules\SocialAuth\Providers\FacebookVerifier;
@@ -103,17 +104,17 @@ it('refuses a Facebook Limited Login token without the right nonce', function (?
 it('checks a Facebook access token with Graph', function () {
     Http::fake(['graph.facebook.com/*' => Http::response(['data' => ['is_valid' => true, 'app_id' => '111', 'user_id' => '987']])]);
 
-    $identity = app(FacebookVerifier::class)->verify('EAAB-access-token', null);
+    $identity = app(FacebookVerifier::class)->verify('EAABaccessToken1234567890', null);
 
     expect([$identity->provider, $identity->subject])->toBe(['facebook', '987']);
     Http::assertSent(fn (Request $request) => str_starts_with($request->url(), 'https://graph.facebook.com/v23.0/debug_token?')
-        && $request['input_token'] === 'EAAB-access-token'
+        && $request['input_token'] === 'EAABaccessToken1234567890'
         && $request['access_token'] === '111|fb-secret');
 });
 
 it('refuses a Facebook access token that is invalid or belongs to another app', function (array $data) {
     Http::fake(['graph.facebook.com/*' => Http::response(['data' => $data])]);
-    failsWith(fn () => app(FacebookVerifier::class)->verify('EAAB-access-token', null), 'unauthenticated');
+    failsWith(fn () => app(FacebookVerifier::class)->verify('EAABaccessToken1234567890', null), 'unauthenticated');
 })->with([
     'invalid' => [['is_valid' => false, 'app_id' => '111', 'user_id' => '987']],
     'other app' => [['is_valid' => true, 'app_id' => '222', 'user_id' => '987']],
@@ -122,8 +123,24 @@ it('refuses a Facebook access token that is invalid or belongs to another app', 
 
 it('is unavailable when Graph cannot be reached or Facebook is not configured', function () {
     Http::fake(['graph.facebook.com/*' => fn () => throw new ConnectionException('timeout for https://graph.facebook.com/?access_token=111|fb-secret')]);
-    failsWith(fn () => app(FacebookVerifier::class)->verify('EAAB-access-token', null), 'provider_unavailable');
+    failsWith(fn () => app(FacebookVerifier::class)->verify('EAABaccessToken1234567890', null), 'provider_unavailable');
 
     config(['social_auth.facebook.app_secret' => '']);
-    failsWith(fn () => app(FacebookVerifier::class)->verify('EAAB-access-token', null), 'provider_unavailable');
+    failsWith(fn () => app(FacebookVerifier::class)->verify('EAABaccessToken1234567890', null), 'provider_unavailable');
 });
+
+it('treats a Graph error about our own app as unavailable, logs it, and never logs the secret', function () {
+    Log::spy();
+    Http::fake(['graph.facebook.com/*' => Http::response(['error' => ['message' => 'Invalid OAuth access token', 'type' => 'OAuthException', 'code' => 190]], 400)]);
+
+    failsWith(fn () => app(FacebookVerifier::class)->verify('EAABsomeAccessToken1234567890', null), 'provider_unavailable');
+
+    Log::shouldHaveReceived('warning')->once()
+        ->withArgs(fn ($message, $context) => $context['meta_code'] === 190 && ! str_contains(json_encode([$message, $context]), 'fb-secret'));
+});
+
+it('refuses junk without asking Graph', function (string $junk) {
+    Http::fake();
+    failsWith(fn () => app(FacebookVerifier::class)->verify($junk, null), 'unauthenticated');
+    Http::assertNothingSent();
+})->with(['spaces and !' => ['not a token!'], 'too short' => ['EAA123'], 'too long' => [str_repeat('A', 600)]]);
