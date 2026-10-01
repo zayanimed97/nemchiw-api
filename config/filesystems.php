@@ -33,9 +33,18 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            'serve' => false, // no signed storage route: files leave only through the API
             'throw' => false,
             'report' => false,
+        ],
+
+        // Profile photos: private, outside the web root, served only by Media's photo route.
+        'photos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/photos'),
+            'serve' => false,
+            'throw' => true,
+            'visibility' => 'private',
         ],
 
         'public' => [

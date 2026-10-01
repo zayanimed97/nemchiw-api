@@ -6,7 +6,9 @@ Shared hosting, SSH on port 65002. The app lives **outside** `public_html`; only
 ## One-time setup
 
 1. hPanel → Advanced → PHP Configuration: PHP **8.3 or newer** for the site.
-   Extensions: pdo_mysql, mbstring, openssl, gd, fileinfo, bcmath, intl.
+   Extensions: pdo_mysql, mbstring, openssl, gd, exif, fileinfo, bcmath, intl.
+   PHP options: `memory_limit` ≥ 256M (photo decoding), `upload_max_filesize` ≥ 6M,
+   `post_max_size` ≥ 8M, `max_execution_time` ≥ 30.
 2. hPanel → Databases → MySQL: create a database and a user with a long random password.
 3. hPanel → Advanced → SSH Access: enable it and add your public key.
 4. On the server:
@@ -42,7 +44,13 @@ Shared hosting, SSH on port 65002. The app lives **outside** `public_html`; only
    APPLE_CLIENT_IDS=tn.nemchiw.app
    FACEBOOK_APP_ID=…
    FACEBOOK_APP_SECRET=…        # Facebook app → Settings → Basic (never commit it)
+   DIDIT_API_KEY=…              # sandbox key first, then the live one
+   DIDIT_WORKFLOW_ID=…          # the Biometric Authentication workflow
+   DIDIT_WEBHOOK_SECRET=…
    ```
+   In the Didit console, set the webhook URL to `https://api.lunara-tn.com/api/v1/webhooks/didit`
+   (session status updates). Account deletion erases sessions at Didit through the queue, so the
+   cron below must be running.
    Then `chmod 600 .env`.
 6. Point the subdomain at `public/`. Find the subdomain's folder in hPanel
    (for example `~/domains/lunara-tn.com/public_html/api`), then:
