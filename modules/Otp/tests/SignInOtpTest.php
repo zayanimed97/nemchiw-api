@@ -3,12 +3,12 @@
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Identity\Models\User;
-use Modules\Otp\Contracts\SmsSender;
-use Modules\Otp\Testing\FakeSmsSender;
+use Modules\Otp\Contracts\OtpSender;
+use Modules\Otp\Testing\FakeOtpSender;
 
 beforeEach(function () {
-    $this->sms = new FakeSmsSender;
-    $this->app->instance(SmsSender::class, $this->sms);
+    $this->codes = new FakeOtpSender;
+    $this->app->instance(OtpSender::class, $this->codes);
 });
 
 function sendCode(string $phone = '+21620123456', string $locale = 'fr', array $headers = [])
@@ -20,21 +20,21 @@ it('sends a code and returns the challenge', function () {
     $response = sendCode()->assertOk()->assertJson(['resendAfter' => 60, 'expiresIn' => 300]);
 
     expect($response->json('challengeId'))->toHaveLength(26);
-    expect($this->sms->sent)->toHaveCount(1);
-    expect($this->sms->sent[0]['phone'])->toBe('+21620123456');
-    $code = $this->sms->lastCode();
+    expect($this->codes->sent)->toHaveCount(1);
+    expect($this->codes->sent[0]['phone'])->toBe('+21620123456');
+    $code = $this->codes->lastCode();
     expect($code)->toMatch('/^\d{6}$/');
     expect(DB::table('otp_challenges')->value('code_hash'))->not->toContain($code);
 });
 
-it('writes the SMS in the requested language', function () {
+it('sends the code in the requested language', function () {
     sendCode(locale: 'ar')->assertOk();
-    expect($this->sms->sent[0]['message'])->toContain('نمشيو');
+    expect($this->codes->sent[0]['locale'])->toBe('ar');
 });
 
 it('rejects anything but a Tunisian mobile number', function (string $phone) {
     sendCode($phone)->assertStatus(422)->assertJsonPath('code', 'validation');
-    expect($this->sms->sent)->toBe([]);
+    expect($this->codes->sent)->toBe([]);
 })->with(['+216 20 123 456', '20123456', '+21610123456', '+33612345678', '']);
 
 it('answers the same way for known and unknown phones', function () {
@@ -48,7 +48,7 @@ it('answers the same way for known and unknown phones', function () {
 
 it('signs in with the right code, once', function () {
     $challengeId = sendCode()->json('challengeId');
-    $code = $this->sms->lastCode();
+    $code = $this->codes->lastCode();
 
     $this->postJson('/api/v1/auth/otp/verify', ['challengeId' => $challengeId, 'code' => $code])
         ->assertOk()
@@ -63,13 +63,13 @@ it('returns isNew false for an existing phone', function () {
     $user = User::factory()->withPhone('+21620123456')->create();
     $challengeId = sendCode()->json('challengeId');
 
-    $this->postJson('/api/v1/auth/otp/verify', ['challengeId' => $challengeId, 'code' => $this->sms->lastCode()])
+    $this->postJson('/api/v1/auth/otp/verify', ['challengeId' => $challengeId, 'code' => $this->codes->lastCode()])
         ->assertOk()->assertJson(['isNew' => false, 'profile' => ['id' => $user->id]]);
 });
 
 it('says invalid_code for a wrong code and locks after 5 attempts', function () {
     $challengeId = sendCode()->json('challengeId');
-    $code = $this->sms->lastCode();
+    $code = $this->codes->lastCode();
     $wrong = $code === '000000' ? '111111' : '000000';
 
     foreach (range(1, 5) as $_) {
@@ -84,7 +84,7 @@ it('expires codes after 5 minutes', function () {
     $challengeId = sendCode()->json('challengeId');
     $this->travel(301)->seconds();
 
-    $this->postJson('/api/v1/auth/otp/verify', ['challengeId' => $challengeId, 'code' => $this->sms->lastCode()])
+    $this->postJson('/api/v1/auth/otp/verify', ['challengeId' => $challengeId, 'code' => $this->codes->lastCode()])
         ->assertStatus(422)->assertJsonPath('code', 'code_expired');
 });
 
@@ -100,7 +100,7 @@ it('makes you wait 60 s between codes', function () {
 
 it('keeps the code someone is typing alive when another is requested', function () {
     $first = sendCode()->json('challengeId');
-    $firstCode = $this->sms->lastCode();
+    $firstCode = $this->codes->lastCode();
     $this->travel(61)->seconds();
     sendCode()->assertOk();
 
@@ -109,7 +109,7 @@ it('keeps the code someone is typing alive when another is requested', function 
 
 it('keeps at most 3 live codes per phone', function () {
     $first = sendCode()->json('challengeId');
-    $firstCode = $this->sms->lastCode();
+    $firstCode = $this->codes->lastCode();
     foreach (range(1, 3) as $_) {
         $this->travel(61)->seconds();
         sendCode()->assertOk();
@@ -119,7 +119,7 @@ it('keeps at most 3 live codes per phone', function () {
         ->assertStatus(422)->assertJsonPath('code', 'code_expired');
 });
 
-it('warns once when half the hourly SMS budget is spent', function () {
+it('warns once when half the hourly message budget is spent', function () {
     config(['otp.limits.global_per_hour' => 4]);
     Log::spy();
 
@@ -127,7 +127,7 @@ it('warns once when half the hourly SMS budget is spent', function () {
         sendCode($phone)->assertOk();
     }
 
-    Log::shouldHaveReceived('warning')->once()->withArgs(fn ($message) => str_contains($message, 'SMS budget'));
+    Log::shouldHaveReceived('warning')->once()->withArgs(fn ($message) => str_contains($message, 'message budget'));
 });
 
 it('caps codes per phone per hour', function () {
@@ -137,7 +137,7 @@ it('caps codes per phone per hour', function () {
     sendCode()->assertOk();
     $this->travel(61)->seconds();
     sendCode()->assertStatus(429);
-    expect($this->sms->sent)->toHaveCount(2);
+    expect($this->codes->sent)->toHaveCount(2);
 });
 
 it('caps codes for the whole service per hour', function () {
@@ -165,7 +165,7 @@ it('rejects malformed verify input', function (array $body) {
 it('locks a phone for a day after 10 wrong codes across challenges', function () {
     foreach (range(1, 2) as $round) {
         $challengeId = sendCode()->json('challengeId');
-        $wrong = $this->sms->lastCode() === '000000' ? '111111' : '000000';
+        $wrong = $this->codes->lastCode() === '000000' ? '111111' : '000000';
         foreach (range(1, 5) as $_) {
             $this->postJson('/api/v1/auth/otp/verify', ['challengeId' => $challengeId, 'code' => $wrong])->assertStatus(422);
         }
@@ -182,7 +182,7 @@ it('locks a phone for a day after 10 wrong codes across challenges', function ()
 it('refuses even the right code while the phone is locked', function () {
     config(['otp.limits.failures_per_phone_per_day' => 2]);
     $challengeId = sendCode()->json('challengeId');
-    $code = $this->sms->lastCode();
+    $code = $this->codes->lastCode();
     $wrong = $code === '000000' ? '111111' : '000000';
 
     foreach (range(1, 2) as $_) {

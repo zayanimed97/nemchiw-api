@@ -16,5 +16,14 @@ return [
         // Wrong codes per phone (all challenges) before it is locked for 24 h.
         'failures_per_phone_per_day' => 10,
     ],
-    'sms_driver' => env('SMS_DRIVER', 'log'),
+    // whatsapp in production; log (code written to the log) in development only.
+    'channel' => env('OTP_CHANNEL', 'log'),
+    'whatsapp' => [
+        'token' => (string) env('WHATSAPP_TOKEN', ''),
+        'phone_number_id' => (string) env('WHATSAPP_PHONE_NUMBER_ID', ''),
+        'template' => env('WHATSAPP_TEMPLATE', 'nemchiw_code'),
+        'graph_version' => env('WHATSAPP_GRAPH_VERSION', 'v23.0'),
+        // App language → the template language it was approved in.
+        'languages' => ['ar' => 'ar', 'fr' => 'fr', 'en' => env('WHATSAPP_LANG_EN', 'en')],
+    ],
 ];
