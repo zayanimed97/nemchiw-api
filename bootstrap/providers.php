@@ -7,6 +7,7 @@ use Modules\Otp\OtpServiceProvider;
 use Modules\Shared\SharedServiceProvider;
 use Modules\SocialAuth\SocialAuthServiceProvider;
 use Modules\Spots\SpotsServiceProvider;
+use Modules\Verification\VerificationServiceProvider;
 
 return [
     AppServiceProvider::class,
@@ -16,4 +17,5 @@ return [
     OtpServiceProvider::class,
     SocialAuthServiceProvider::class,
     MediaServiceProvider::class,
+    VerificationServiceProvider::class,
 ];
