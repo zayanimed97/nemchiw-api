@@ -33,7 +33,11 @@ Shared hosting, SSH on port 65002. The app lives **outside** `public_html`; only
    DB_DATABASE=…
    DB_USERNAME=…
    DB_PASSWORD=…
-   SMS_DRIVER=log   # OTP sends fail with 500 in production until a real SMS provider is added
+   OTP_CHANNEL=whatsapp
+   WHATSAPP_TOKEN=…             # Meta System User token (never commit it)
+   WHATSAPP_PHONE_NUMBER_ID=…   # from WhatsApp Manager → Phone numbers
+   WHATSAPP_TEMPLATE=nemchiw_code
+   WHATSAPP_LANG_EN=en          # the language code the English template was approved with
    ```
    Then `chmod 600 .env`.
 6. Point the subdomain at `public/`. Find the subdomain's folder in hPanel

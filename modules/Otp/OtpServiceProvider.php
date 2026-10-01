@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\RateLimiter;
 use InvalidArgumentException;
 use Modules\Identity\Events\AccountDeleting;
 use Modules\Otp\Actions\PruneChallenges;
-use Modules\Otp\Contracts\SmsSender;
+use Modules\Otp\Channels\LogOtpSender;
+use Modules\Otp\Channels\WhatsAppOtpSender;
+use Modules\Otp\Contracts\OtpSender;
 use Modules\Otp\Listeners\ForgetChallenges;
-use Modules\Otp\Sms\LogSmsSender;
 use Modules\Shared\Providers\ModuleServiceProvider;
 use RuntimeException;
 
@@ -27,13 +28,14 @@ class OtpServiceProvider extends ModuleServiceProvider
     {
         parent::register();
 
-        $this->app->bind(SmsSender::class, fn () => match (config('otp.sms_driver')) {
+        $this->app->bind(OtpSender::class, fn () => match (config('otp.channel')) {
+            'whatsapp' => new WhatsAppOtpSender((array) config('otp.whatsapp')),
             // Fail when resolved, so a misconfigured production send is a visible
-            // error on the request rather than a silent failure after it.
+            // error on the request rather than a silent failure.
             'log' => $this->app->isProduction()
-                ? throw new RuntimeException('SMS_DRIVER=log is not allowed in production')
-                : new LogSmsSender,
-            default => throw new InvalidArgumentException('Unknown SMS_DRIVER: '.config('otp.sms_driver')),
+                ? throw new RuntimeException('OTP_CHANNEL=log is not allowed in production')
+                : new LogOtpSender,
+            default => throw new InvalidArgumentException('Unknown OTP_CHANNEL: '.config('otp.channel')),
         });
     }
 

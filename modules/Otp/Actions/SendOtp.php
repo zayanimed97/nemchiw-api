@@ -5,19 +5,16 @@ namespace Modules\Otp\Actions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
-use Modules\Otp\Contracts\SmsSender;
+use Modules\Otp\Contracts\OtpSender;
 use Modules\Otp\Models\OtpChallenge;
 use Modules\Otp\Support\OtpCode;
-use Modules\Otp\Support\OtpMessage;
 use Modules\Otp\Support\PhoneLock;
 use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
 
-use function Illuminate\Support\defer;
-
 final class SendOtp
 {
-    public function __construct(private readonly SmsSender $sms) {}
+    public function __construct(private readonly OtpSender $sender) {}
 
     /** @return array{challengeId: string, resendAfter: int, expiresIn: int} */
     public function __invoke(string $phone, string $purpose, ?string $userId, string $locale): array
@@ -32,6 +29,14 @@ final class SendOtp
             $this->guardLimits($phone, $purpose);
 
             $now = now();
+            $code = OtpCode::generate();
+            $challenge = new OtpChallenge;
+            $challenge->id = $challenge->newUniqueId();
+
+            // Sent before anything is saved or charged: if WhatsApp refuses, the person
+            // gets provider_unavailable now and can simply try again.
+            $this->sender->send($phone, $code, $locale);
+
             // A resend must not kill the code someone is typing (anyone can request a
             // code for any phone), but a few live codes at most keeps guessing odds low.
             $keep = OtpChallenge::query()->where('phone', $phone)->where('purpose', $purpose)
@@ -40,9 +45,6 @@ final class SendOtp
             OtpChallenge::query()->where('phone', $phone)->where('purpose', $purpose)
                 ->whereNull('consumed_at')->whereNotIn('id', $keep)->update(['consumed_at' => $now]);
 
-            $code = OtpCode::generate();
-            $challenge = new OtpChallenge;
-            $challenge->id = $challenge->newUniqueId();
             $challenge->forceFill([
                 'phone' => $phone,
                 'purpose' => $purpose,
@@ -55,13 +57,8 @@ final class SendOtp
             RateLimiter::hit("otp:phone:{$phone}", 3600);
             $spent = RateLimiter::hit('otp:global', 3600);
             if ($spent === (int) ceil(config('otp.limits.global_per_hour') / 2)) {
-                Log::warning('OTP: half of the hourly SMS budget is spent; check for SMS pumping');
+                Log::warning('OTP: half of the hourly message budget is spent; check for message pumping');
             }
-            // After the response is flushed, never through the queue: the code is never
-            // stored in plain text, and the cron-driven worker on shared hosting would
-            // delay it by up to a minute.
-            $message = OtpMessage::for($locale, $code);
-            defer(fn () => $this->sms->send($phone, $message));
 
             return [
                 'challengeId' => $challenge->id,

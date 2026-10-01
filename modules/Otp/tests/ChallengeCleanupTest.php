@@ -2,11 +2,11 @@
 
 use Modules\Identity\Models\User;
 use Modules\Otp\Actions\PruneChallenges;
-use Modules\Otp\Contracts\SmsSender;
+use Modules\Otp\Contracts\OtpSender;
 use Modules\Otp\Models\OtpChallenge;
-use Modules\Otp\Testing\FakeSmsSender;
+use Modules\Otp\Testing\FakeOtpSender;
 
-beforeEach(fn () => $this->app->instance(SmsSender::class, new FakeSmsSender));
+beforeEach(fn () => $this->app->instance(OtpSender::class, new FakeOtpSender));
 
 it('forgets challenges when the account is deleted', function () {
     $user = User::factory()->withPhone('+21620123456')->create();
