@@ -122,9 +122,9 @@ it('is unavailable when the provider keys cannot be fetched', function (Closure 
     Http::fake([JWKS_URL => $response]);
     expectApiError(fn () => verifyToken(TokenFactory::sign(claims())), 'provider_unavailable');
 })->with([
-    'down' => [fn () => fn () => throw new ConnectionException('timeout')],
-    'error' => [fn () => fn () => Http::response('oops', 500)],
-    'not a key set' => [fn () => fn () => Http::response(['nope' => true])],
+    'down' => [fn () => throw new ConnectionException('timeout')],
+    'error' => [fn () => Http::response('oops', 500)],
+    'not a key set' => [fn () => Http::response(['nope' => true])],
 ]);
 
 it('keeps the cached keys when a refetch fails', function () {

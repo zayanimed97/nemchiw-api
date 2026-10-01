@@ -42,6 +42,14 @@ Shared hosting, SSH on port 65002. The app lives **outside** `public_html`; only
    APPLE_CLIENT_IDS=tn.nemchiw.app
    FACEBOOK_APP_ID=…
    FACEBOOK_APP_SECRET=…        # Facebook app → Settings → Basic (never commit it)
+   DIDIT_API_KEY=…              # sandbox key first, then the live one
+   DIDIT_WORKFLOW_ID=…          # the Biometric Authentication workflow
+   DIDIT_WEBHOOK_SECRET=…
+   ```
+   In the Didit console, set the webhook URL to `https://api.lunara-tn.com/api/v1/webhooks/didit`
+   (session status updates). Account deletion erases sessions at Didit through the queue, so the
+   cron below must be running.
+   ```dotenv
    ```
    Then `chmod 600 .env`.
 6. Point the subdomain at `public/`. Find the subdomain's folder in hPanel

@@ -108,8 +108,8 @@ it('answers provider_unavailable when Didit fails, and spends nothing', function
 
     start()->assertOk();
 })->with([
-    'refused' => [fn () => fn () => Http::response(['detail' => 'Invalid workflow'], 400)],
-    'down' => [fn () => fn () => Http::response('oops', 502)],
+    'refused' => [fn () => Http::response(['detail' => 'Invalid workflow'], 400)],
+    'down' => [fn () => Http::response('oops', 502)],
 ]);
 
 it('answers provider_unavailable when Didit cannot be reached', function () {

@@ -2,9 +2,15 @@
 
 namespace Modules\Verification;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
+use Modules\Identity\Events\AccountDeleting;
 use Modules\Shared\Providers\ModuleServiceProvider;
 use Modules\Verification\Contracts\IdentityVerifier;
 use Modules\Verification\Didit\DiditVerifier;
+use Modules\Verification\Listeners\EraseSessions;
 
 class VerificationServiceProvider extends ModuleServiceProvider
 {
@@ -17,5 +23,13 @@ class VerificationServiceProvider extends ModuleServiceProvider
     {
         parent::register();
         $this->app->bind(IdentityVerifier::class, fn () => new DiditVerifier((array) config('verification.didit')));
+    }
+
+    public function boot(): void
+    {
+        parent::boot();
+
+        RateLimiter::for('didit-webhook', fn (Request $request) => Limit::perMinute(120)->by('ip:'.$request->ip()));
+        Event::listen(AccountDeleting::class, EraseSessions::class);
     }
 }
