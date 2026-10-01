@@ -4,6 +4,7 @@ use App\Providers\AppServiceProvider;
 use Modules\Identity\IdentityServiceProvider;
 use Modules\Otp\OtpServiceProvider;
 use Modules\Shared\SharedServiceProvider;
+use Modules\SocialAuth\SocialAuthServiceProvider;
 use Modules\Spots\SpotsServiceProvider;
 
 return [
@@ -12,4 +13,5 @@ return [
     SpotsServiceProvider::class,
     IdentityServiceProvider::class,
     OtpServiceProvider::class,
+    SocialAuthServiceProvider::class,
 ];
