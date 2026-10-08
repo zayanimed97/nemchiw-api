@@ -1,6 +1,7 @@
 <?php
 
 use App\Providers\AppServiceProvider;
+use Modules\Centres\CentresServiceProvider;
 use Modules\Identity\IdentityServiceProvider;
 use Modules\Media\MediaServiceProvider;
 use Modules\Otp\OtpServiceProvider;
@@ -15,6 +16,7 @@ return [
     SharedServiceProvider::class,
     SpotsServiceProvider::class,
     TrailsServiceProvider::class,
+    CentresServiceProvider::class,
     IdentityServiceProvider::class,
     OtpServiceProvider::class,
     SocialAuthServiceProvider::class,
