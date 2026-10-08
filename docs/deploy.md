@@ -113,6 +113,9 @@ touches it:
 php artisan migrate --force && php artisan filament:assets && php artisan optimize
 ```
 
+- The panel needs a session that persists: `.env` must have `SESSION_DRIVER=file` (the
+  API itself is stateless, so `array` used to be enough) and, in production,
+  `SESSION_SECURE_COOKIE=true`. With `array`, every login fails with "page expired" (419).
 - Create the first admin with `php artisan admin:create you@example.com --name="…"` (it asks
   for the password, 12 characters minimum). There is no sign-up page.
 - At first login, scan the QR code with an authenticator app and store the recovery codes.
