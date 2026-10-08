@@ -37,6 +37,7 @@ it('rejects rows that break the contract', function (array $patch) {
     'unknown governorate' => [['governorate' => 'paris']],
     'outside Tunisia' => [['latitude' => 48.85]],
     'bad id' => [['id' => '../etc']],
+    'reserved example prefix' => [['id' => 'example-beach']],
     'unknown type' => [['type' => 'volcano']],
 ])->throws(ValidationException::class);
 

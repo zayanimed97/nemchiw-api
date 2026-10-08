@@ -5,6 +5,7 @@ namespace Modules\Spots\Actions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Modules\Shared\Places\PlaceFacts;
 use Modules\Shared\Support\Governorates;
 use Modules\Spots\Models\Spot;
 
@@ -87,7 +88,7 @@ final class ImportSpots
         return [
             'rows' => ['required', 'array'],
             'rows.*' => ['array:id,name,description,latitude,longitude,governorate,type,access,water,coverage,permit'],
-            'rows.*.id' => ['required', 'string', 'max:64', 'regex:/^[a-z0-9-]+$/', 'distinct'],
+            'rows.*.id' => [...PlaceFacts::ID_RULE, 'distinct'],
             'rows.*.name' => ['required', 'array:ar,fr,en'],
             'rows.*.name.ar' => $text(120),
             'rows.*.name.fr' => $text(120),
@@ -102,8 +103,8 @@ final class ImportSpots
             'rows.*.type' => ['required', Rule::in(Spot::TYPES)],
             'rows.*.access' => ['required', Rule::in(Spot::ACCESS)],
             'rows.*.water' => ['required', 'boolean'],
-            'rows.*.coverage' => ['required', Rule::in(Spot::COVERAGE)],
-            'rows.*.permit' => ['required', Rule::in(Spot::PERMIT)],
+            'rows.*.coverage' => ['required', Rule::in(PlaceFacts::COVERAGE)],
+            'rows.*.permit' => ['required', Rule::in(PlaceFacts::PERMIT)],
         ];
     }
 }

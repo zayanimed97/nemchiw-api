@@ -2,17 +2,23 @@
 
 namespace Modules\Spots\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Prunable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Shared\Places\PlaceFacts;
 
 final class Spot extends Model
 {
+    use Prunable, SoftDeletes;
+
     public const TYPES = ['beach', 'forest', 'desert', 'mountain'];
 
     public const ACCESS = ['car', 'fourByFour'];
 
-    public const COVERAGE = ['none', 'weak', 'good'];
+    public const COVERAGE = PlaceFacts::COVERAGE;
 
-    public const PERMIT = ['yes', 'no', 'unknown'];
+    public const PERMIT = PlaceFacts::PERMIT;
 
     public $incrementing = false;
 
@@ -22,7 +28,7 @@ final class Spot extends Model
 
     protected $fillable = [
         'name', 'description', 'latitude', 'longitude', 'governorate',
-        'type', 'access', 'water', 'coverage', 'permit',
+        'type', 'access', 'water', 'coverage', 'permit', 'status', 'rejection_reason',
     ];
 
     protected function casts(): array
@@ -34,5 +40,11 @@ final class Spot extends Model
             'longitude' => 'float',
             'water' => 'boolean',
         ];
+    }
+
+    /** Tombstones past the sync window go for good (`model:prune`, daily). */
+    public function prunable(): Builder
+    {
+        return self::onlyTrashed()->where('deleted_at', '<', now()->subDays((int) config('shared.places.tombstone_days')));
     }
 }

@@ -12,10 +12,12 @@ it('returns every spot in the contract shape', function () {
     $response = $this->getJson('/api/v1/spots')->assertOk();
 
     expect($response->json('data'))->toHaveCount(15);
+    expect(array_keys($response->json()))->toEqualCanonicalizing(['data', 'removed', 'full', 'serverTime']);
     expect(array_keys($response->json('data.0')))->toEqualCanonicalizing([
         'id', 'name', 'description', 'latitude', 'longitude', 'governorate', 'type',
-        'access', 'water', 'coverage', 'permit', 'updatedAt',
+        'access', 'water', 'coverage', 'permit', 'photos', 'updatedAt',
     ]);
+    expect($response->json('data.0.photos'))->toBe([]);
     expect($response->json('data.0.name'))->toHaveKeys(['ar', 'fr', 'en']);
     expect($response->json('serverTime'))->toMatch('/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/');
 });
@@ -51,7 +53,7 @@ it('still delivers a row that committed after the read with an earlier stamp', f
 });
 
 it('treats updatedSince as strictly after', function () {
-    $newest = $this->getJson('/api/v1/spots')->json('data.14.updatedAt');
+    $newest = max(array_column($this->getJson('/api/v1/spots')->json('data'), 'updatedAt'));
 
     $this->getJson('/api/v1/spots?updatedSince='.urlencode($newest))->assertJsonCount(0, 'data');
 });
@@ -65,10 +67,18 @@ it('understands offsets in updatedSince', function () {
     expect($offset)->toEqual($utc);
 });
 
-it('pages with serverTime as the cursor', function () {
-    config(['spots.page_size' => 10]);
+it('pages incremental answers with serverTime as the cursor', function () {
+    config(['shared.places.page_size' => 10]);
+    $this->travel(10)->minutes();
+    $since = $this->getJson('/api/v1/spots')->json('serverTime');
+    $this->travel(10)->minutes();
+    foreach (Spot::all() as $spot) {
+        $spot->water = ! $spot->water;
+        $spot->save();
+        $this->travel(1)->milliseconds();
+    }
 
-    $first = $this->getJson('/api/v1/spots')->assertJsonCount(10, 'data');
+    $first = $this->getJson('/api/v1/spots?updatedSince='.urlencode($since))->assertJsonCount(10, 'data');
     expect($first->json('serverTime'))->toBe($first->json('data.9.updatedAt'));
 
     $second = $this->getJson('/api/v1/spots?updatedSince='.urlencode($first->json('serverTime')))->assertJsonCount(5, 'data');

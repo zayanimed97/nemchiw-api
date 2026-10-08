@@ -10,6 +10,12 @@ use Modules\Spots\Models\Spot;
 /** @mixin Spot */
 final class SpotResource extends JsonResource
 {
+    /** @param list<string> $photos content hashes, cover first */
+    public function __construct(Spot $resource, private readonly array $photos = [])
+    {
+        parent::__construct($resource);
+    }
+
     public function toArray(Request $request): array
     {
         return [
@@ -24,6 +30,7 @@ final class SpotResource extends JsonResource
             'water' => $this->water,
             'coverage' => $this->coverage,
             'permit' => $this->permit,
+            'photos' => $this->photos,
             'updatedAt' => Iso::format($this->updated_at),
         ];
     }
