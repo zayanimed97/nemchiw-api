@@ -9,8 +9,10 @@ use Illuminate\Support\Facades\RateLimiter;
 use Modules\Identity\Contracts\ProfilePhotos;
 use Modules\Identity\Events\AccountDeleting;
 use Modules\Media\Contracts\Photos;
+use Modules\Media\Contracts\PlacePhotos;
 use Modules\Media\Listeners\ForgetPhoto;
 use Modules\Media\Services\PhotoStore;
+use Modules\Media\Services\PlacePhotoStore;
 use Modules\Shared\Providers\ModuleServiceProvider;
 
 class MediaServiceProvider extends ModuleServiceProvider
@@ -26,6 +28,7 @@ class MediaServiceProvider extends ModuleServiceProvider
         $this->app->singleton(PhotoStore::class);
         $this->app->singleton(Photos::class, fn ($app) => $app->make(PhotoStore::class));
         $this->app->singleton(ProfilePhotos::class, fn ($app) => $app->make(PhotoStore::class));
+        $this->app->singleton(PlacePhotos::class, PlacePhotoStore::class);
     }
 
     public function boot(): void

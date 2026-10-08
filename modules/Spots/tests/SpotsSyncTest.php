@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Storage;
+use Modules\Media\Contracts\PlacePhotos;
+use Modules\Media\Testing\Images;
 use Modules\Spots\Actions\ImportSpots;
 use Modules\Spots\Models\Spot;
 
@@ -94,4 +97,17 @@ it('answers a repeat request with 304 via ETag', function () {
     $etag = $this->getJson('/api/v1/spots')->headers->get('ETag');
     expect($etag)->not->toBeNull();
     $this->getJson('/api/v1/spots', ['If-None-Match' => $etag])->assertStatus(304);
+});
+
+it('sends photo hashes and resyncs a spot when its photos change', function () {
+    Storage::fake('place_photos');
+    $this->travel(10)->minutes();
+    $since = $this->getJson('/api/v1/spots')->json('serverTime');
+    $this->travel(10)->minutes();
+
+    $hash = app(PlacePhotos::class)->add('spot', 'tabarka', Images::jpeg());
+
+    $response = $this->getJson('/api/v1/spots?updatedSince='.urlencode($since));
+    expect(array_column($response->json('data'), 'id'))->toBe(['tabarka']);
+    expect($response->json('data.0.photos'))->toBe([$hash]);
 });

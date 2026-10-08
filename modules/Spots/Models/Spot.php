@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Media\Contracts\PlacePhotos;
 use Modules\Shared\Places\PlaceFacts;
+use Modules\Shared\Places\PlaceKind;
 
 final class Spot extends Model
 {
@@ -46,5 +48,11 @@ final class Spot extends Model
     public function prunable(): Builder
     {
         return self::onlyTrashed()->where('deleted_at', '<', now()->subDays((int) config('shared.places.tombstone_days')));
+    }
+
+    /** Photos go with the place when its tombstone is pruned. */
+    protected function pruning(): void
+    {
+        app(PlacePhotos::class)->forgetPlace(PlaceKind::SPOT, $this->id);
     }
 }

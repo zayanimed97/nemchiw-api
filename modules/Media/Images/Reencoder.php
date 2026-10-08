@@ -25,6 +25,25 @@ final class Reencoder
 
     public function toJpeg(string $bytes, int $longSide = self::LONG_SIDE): string
     {
+        $image = $this->decode($bytes, $longSide);
+        ob_start();
+        imagejpeg($image, null, self::QUALITY);
+
+        return (string) ob_get_clean();
+    }
+
+    /** Public place photos: WebP is about a third smaller than JPEG at the same quality. */
+    public function toWebp(string $bytes, int $longSide): string
+    {
+        $image = $this->decode($bytes, $longSide);
+        ob_start();
+        imagewebp($image, null, self::QUALITY);
+
+        return (string) ob_get_clean();
+    }
+
+    private function decode(string $bytes, int $longSide): \GdImage
+    {
         $info = @getimagesizefromstring($bytes);
         if ($info === false || ! in_array($info[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG], true)) {
             throw self::invalid();
@@ -50,10 +69,7 @@ final class Reencoder
         }
         $image = $this->upright($image, $bytes, $info[2]);
 
-        ob_start();
-        imagejpeg($image, null, self::QUALITY);
-
-        return (string) ob_get_clean();
+        return $image;
     }
 
     /** Phones store "rotate me" in EXIF; bake it in, since EXIF is about to be dropped. */

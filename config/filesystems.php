@@ -30,6 +30,14 @@ return [
 
     'disks' => [
 
+        // Place photos: public, immutable (named by content hash), served by the web server.
+        'place_photos' => [
+            'driver' => 'local',
+            'root' => public_path('media/places'),
+            'visibility' => 'public',
+            'throw' => true,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
