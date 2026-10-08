@@ -1,5 +1,6 @@
 <?php
 
+use Modules\Admin\Models\Admin;
 use Modules\Identity\Models\User;
 
 return [
@@ -42,6 +43,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // The Filament panel. Admins are a separate table; app users can't sign in here.
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
     ],
 
     /*
@@ -65,6 +72,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => User::class,
+        ],
+
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => Admin::class,
         ],
 
         // 'users' => [

@@ -103,3 +103,21 @@ curl -s https://api.lunara-tn.com/api/v1/nope                         # {"code":
 curl -sI https://api.lunara-tn.com/.env                               # 403 or 404, never 200
 curl -sI https://api.lunara-tn.com/api/v1/spots | grep -i -E 'strict-transport|nosniff'
 ```
+
+## Admin panel
+
+The Filament panel lives at `/admin` (module `modules/Admin`). After deploying a release that
+touches it:
+
+```bash
+php artisan migrate --force && php artisan filament:assets && php artisan optimize
+```
+
+- Create the first admin with `php artisan admin:create you@example.com --name="…"` (it asks
+  for the password, 12 characters minimum). There is no sign-up page.
+- At first login, scan the QR code with an authenticator app and store the recovery codes.
+  Two-factor is required.
+- Place photos are WebP: check GD has it with
+  `php -r 'var_dump(gd_info()["WebP Support"] ?? false);'` (must print `true`).
+- `public/media/places` must be writable by PHP. Its `.htaccess` serves the photos with a
+  one-year immutable cache header.

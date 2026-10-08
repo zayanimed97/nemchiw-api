@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
@@ -19,7 +20,14 @@ final class ApiExceptionRenderer
     public static function register(Exceptions $exceptions): void
     {
         $exceptions->dontReport(ApiException::class);
-        $exceptions->render(fn (Throwable $e) => self::render($e));
+        // The admin panel (web routes) keeps Laravel's own handling: redirects to login, HTML pages.
+        $exceptions->render(fn (Throwable $e, Request $request) => self::isPanel($request) ? null : self::render($e));
+    }
+
+    /** Admin panel requests (pages and Livewire calls) are not API calls. */
+    private static function isPanel(Request $request): bool
+    {
+        return $request->is('admin', 'admin/*', 'livewire*', 'filament/*');
     }
 
     public static function render(Throwable $e): JsonResponse
