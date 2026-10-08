@@ -7,12 +7,14 @@ use Modules\Otp\OtpServiceProvider;
 use Modules\Shared\SharedServiceProvider;
 use Modules\SocialAuth\SocialAuthServiceProvider;
 use Modules\Spots\SpotsServiceProvider;
+use Modules\Trails\TrailsServiceProvider;
 use Modules\Verification\VerificationServiceProvider;
 
 return [
     AppServiceProvider::class,
     SharedServiceProvider::class,
     SpotsServiceProvider::class,
+    TrailsServiceProvider::class,
     IdentityServiceProvider::class,
     OtpServiceProvider::class,
     SocialAuthServiceProvider::class,
