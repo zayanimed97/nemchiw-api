@@ -15,6 +15,7 @@ Route::middleware('auth:sanctum')->group(function () use ($ulid) {
     Route::patch('trips/{id}', [TripsController::class, 'update'])->where('id', $ulid);
     Route::post('trips/{id}/requests', [TripRequestsController::class, 'store'])->where('id', $ulid);
     Route::post('trips/{id}/cancel', [TripRequestsController::class, 'cancelTrip'])->where('id', $ulid);
+    Route::post('requests/{id}/scan', [TripRequestsController::class, 'scan'])->where('id', $ulid);
     Route::post('requests/{id}/{action}', [TripRequestsController::class, 'transition'])
         ->where(['id' => $ulid, 'action' => 'accept|decline|withdraw|cancel']);
     Route::get('me/trips', MyTripsController::class);

@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Trips\Actions\CancelTrip;
 use Modules\Trips\Actions\RequestTransitions;
+use Modules\Trips\Actions\ScanJoinCode;
 use Modules\Trips\Models\Trip;
 use Modules\Trips\Models\TripRequest;
 use Modules\Trips\Services\TripPresenter;
@@ -40,6 +41,15 @@ final class TripRequestsController
         $trip = $cancel(Trip::query()->findOrFail($id), $userId);
 
         return new JsonResponse($this->presenter->detail($trip, $userId));
+    }
+
+    public function scan(Request $request, string $id, ScanJoinCode $scan): JsonResponse
+    {
+        $data = $request->validate(['code' => ['required', 'string', 'digits:6']]);
+        $userId = $this->userId($request);
+        $joined = $scan($id, $userId, $data['code']);
+
+        return new JsonResponse($this->presenter->detail($joined->trip()->firstOrFail(), $userId));
     }
 
     private function userId(Request $request): string
