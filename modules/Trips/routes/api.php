@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Shared\Http\LimitBodySize;
 use Modules\Trips\Http\MyTripsController;
 use Modules\Trips\Http\PlacesController;
+use Modules\Trips\Http\ReportsController;
 use Modules\Trips\Http\TripRequestsController;
 use Modules\Trips\Http\TripsController;
 
@@ -18,6 +19,7 @@ Route::middleware('auth:sanctum')->group(function () use ($ulid) {
     Route::post('trips/{id}/requests', [TripRequestsController::class, 'store'])->where('id', $ulid);
     Route::post('trips/{id}/cancel', [TripRequestsController::class, 'cancelTrip'])->where('id', $ulid);
     Route::post('requests/{id}/scan', [TripRequestsController::class, 'scan'])->where('id', $ulid);
+    Route::post('requests/{id}/reports', ReportsController::class)->where('id', $ulid);
     Route::post('requests/{id}/{action}', [TripRequestsController::class, 'transition'])
         ->where(['id' => $ulid, 'action' => 'accept|decline|withdraw|cancel']);
     Route::get('me/trips', MyTripsController::class);

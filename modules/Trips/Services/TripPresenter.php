@@ -7,6 +7,7 @@ use Modules\Identity\Contracts\People;
 use Modules\Organisers\Contracts\OrganiserRecords;
 use Modules\Shared\Support\Iso;
 use Modules\Trips\Models\Trip;
+use Modules\Trips\Models\TripReport;
 use Modules\Trips\Models\TripRequest;
 use Modules\Trips\Models\TripRequestMember;
 use Modules\Trips\Support\RequestStatus;
@@ -38,7 +39,7 @@ final class TripPresenter
             'meetup' => $isOrganiser || in_array($status, [RequestStatus::ACCEPTED, RequestStatus::JOINED], true)
                 ? ['url' => $trip->meetup_url, 'at' => Iso::format($trip->meetup_at)]
                 : null,
-            'myRequest' => $mine === null ? null : $this->myRequest($mine),
+            'myRequest' => $mine === null ? null : $this->myRequest($mine, $viewerId),
             'contact' => $status === RequestStatus::JOINED
                 ? ['phone' => $this->records->isCertified($trip->organiser_id)
                     ? ($this->records->publicPhone($trip->organiser_id) ?? $this->people->phone($trip->organiser_id))
@@ -47,8 +48,8 @@ final class TripPresenter
         ]);
     }
 
-    /** @return array{id: string, status: string, note: ?string, createdAt: string, acceptedAt: ?string, joinedAt: ?string} */
-    public function myRequest(TripRequest $request): array
+    /** @return array{id: string, status: string, note: ?string, createdAt: string, acceptedAt: ?string, joinedAt: ?string, report: ?array{reason: string, status: string}} */
+    public function myRequest(TripRequest $request, ?string $viewerId = null): array
     {
         return [
             'id' => $request->id,
@@ -57,7 +58,16 @@ final class TripPresenter
             'createdAt' => Iso::format($request->created_at),
             'acceptedAt' => $request->accepted_at === null ? null : Iso::format($request->accepted_at),
             'joinedAt' => $request->joined_at === null ? null : Iso::format($request->joined_at),
+            'report' => $viewerId === null ? null : $this->reportBy($request->id, $viewerId),
         ];
+    }
+
+    /** @return array{reason: string, status: string}|null */
+    public function reportBy(string $requestId, string $userId): ?array
+    {
+        $report = TripReport::query()->where('request_id', $requestId)->where('reporter_id', $userId)->latest('created_at')->first();
+
+        return $report === null ? null : ['reason' => $report->reason, 'status' => $report->status];
     }
 
     public function latestRequestOf(Trip $trip, string $userId): ?TripRequest

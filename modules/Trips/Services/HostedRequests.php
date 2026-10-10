@@ -12,7 +12,7 @@ use Modules\Trips\Support\RequestStatus;
 /** The organiser's view of the people asking to join a trip. */
 final class HostedRequests
 {
-    public function __construct(private readonly People $people) {}
+    public function __construct(private readonly People $people, private readonly TripPresenter $presenter) {}
 
     /** @return list<array<string, mixed>> */
     public function for(Trip $trip): array
@@ -36,6 +36,7 @@ final class HostedRequests
                 'scannedAt' => $m->scanned_at === null ? null : Iso::format($m->scanned_at),
             ])->values()->all(),
             'codeSecret' => $r->status === RequestStatus::ACCEPTED ? $r->code_secret : null,
+            'report' => $this->presenter->reportBy($r->id, $trip->organiser_id),
             'details' => $r->status === RequestStatus::JOINED && $detailsOpen ? $this->people->participantDetails($r->leader_id) : null,
         ])->values()->all();
     }
