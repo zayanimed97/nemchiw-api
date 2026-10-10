@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Shared\Http\LimitBodySize;
 use Modules\Trips\Http\MyTripsController;
+use Modules\Trips\Http\PlacesController;
 use Modules\Trips\Http\TripRequestsController;
 use Modules\Trips\Http\TripsController;
 
@@ -19,4 +21,9 @@ Route::middleware('auth:sanctum')->group(function () use ($ulid) {
     Route::post('requests/{id}/{action}', [TripRequestsController::class, 'transition'])
         ->where(['id' => $ulid, 'action' => 'accept|decline|withdraw|cancel']);
     Route::get('me/trips', MyTripsController::class);
+    Route::post('places/{kind}', [PlacesController::class, 'store'])->where('kind', 'spot|trail')->middleware('throttle:place-submissions');
+    Route::post('places/{kind}/{id}/photos', [PlacesController::class, 'photo'])
+        ->where(['kind' => 'spot|trail', 'id' => '[a-z0-9-]{1,64}'])
+        ->withoutMiddleware(LimitBodySize::class)
+        ->middleware([LimitBodySize::class.':'.config('media.max_body_bytes'), 'throttle:photo-uploads']);
 });
