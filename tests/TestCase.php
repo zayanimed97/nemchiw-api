@@ -7,12 +7,15 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 abstract class TestCase extends BaseTestCase
 {
     /**
-     * Each test request authenticates afresh, as a real one does. Without this the
-     * sanctum guard keeps the first user of a test for every later request.
+     * A request with a bearer token authenticates afresh, as a real one does. Without
+     * this the sanctum guard keeps a test's first user for every later request.
+     * actingAs() requests (no token) keep their user.
      */
     public function call($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null)
     {
-        $this->app['auth']->forgetGuards();
+        if (isset($this->defaultHeaders['Authorization'])) {
+            $this->app['auth']->forgetGuards();
+        }
 
         return parent::call($method, $uri, $parameters, $cookies, $files, $server, $content);
     }
