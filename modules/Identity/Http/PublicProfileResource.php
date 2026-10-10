@@ -4,6 +4,7 @@ namespace Modules\Identity\Http;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Identity\Contracts\CampCounts;
 use Modules\Identity\Contracts\ProfilePhotos;
 use Modules\Identity\Models\User;
 use Modules\Shared\Support\Iso;
@@ -29,7 +30,7 @@ final class PublicProfileResource extends JsonResource
                 : ['governorate' => $this->home_governorate, 'city' => $this->home_city],
             'car' => $this->car_seats === null ? null : ['seats' => $this->car_seats],
             'joinedAt' => Iso::format($this->created_at),
-            'campsCount' => 0,
+            'campsCount' => app(CampCounts::class)->for($this->id),
             'age' => $this->birth_date?->age,
             'photo' => app(ProfilePhotos::class)->publicView($this->id),
         ];

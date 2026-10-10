@@ -16,7 +16,7 @@ it('returns the owner profile in the contract shape', function () {
 
     expect(array_keys($response->json()))->toEqualCanonicalizing([
         'id', 'firstName', 'lastName', 'gender', 'birthDate', 'phone', 'email', 'photo', 'level',
-        'skills', 'bio', 'homeArea', 'car', 'emergencyContact', 'providers', 'joinedAt', 'campsCount',
+        'skills', 'bio', 'homeArea', 'car', 'emergencyContact', 'medicalInfo', 'providers', 'joinedAt', 'campsCount',
     ]);
     expect($response->json())->toMatchArray([
         'id' => $user->id, 'firstName' => 'Sami', 'phone' => '+21620123456',

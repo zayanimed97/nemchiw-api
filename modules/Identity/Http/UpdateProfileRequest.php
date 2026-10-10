@@ -31,6 +31,8 @@ final class UpdateProfileRequest extends FormRequest
             'emergencyContact' => ['sometimes', 'nullable', 'array:name,phone'],
             'emergencyContact.name' => ['required_with:emergencyContact', 'string', 'max:'.O::NAME_MAX],
             'emergencyContact.phone' => ['required_with:emergencyContact', 'string', 'regex:'.TunisianPhone::PATTERN],
+            'medicalInfo' => ['sometimes', 'nullable', 'array:note'],
+            'medicalInfo.note' => ['present_with:medicalInfo', 'nullable', 'string', 'max:'.O::MEDICAL_MAX],
         ];
     }
 
@@ -48,6 +50,7 @@ final class UpdateProfileRequest extends FormRequest
             'firstName' => 'first_name', 'lastName' => 'last_name', 'gender' => 'gender',
             'birthDate' => 'birth_date', 'email' => 'email', 'level' => 'level',
             'skills' => 'skills', 'bio' => 'bio', 'emergencyContact' => 'emergency_contact',
+            'medicalInfo' => 'medical_info',
         ] as $key => $column) {
             if (array_key_exists($key, $data)) {
                 $columns[$column] = $data[$key];

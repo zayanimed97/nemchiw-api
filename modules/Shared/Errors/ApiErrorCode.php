@@ -17,6 +17,16 @@ enum ApiErrorCode: string
     case PhoneTaken = 'phone_taken';
     case ProviderUnavailable = 'provider_unavailable';
     case Server = 'server';
+    case Forbidden = 'forbidden';
+    case NotTripReady = 'not_trip_ready';
+    case WomenOnlyRequired = 'women_only_required';
+    case NotCertified = 'not_certified';
+    case AlreadyRequested = 'already_requested';
+    case OwnTrip = 'own_trip';
+    case TripLocked = 'trip_locked';
+    case TripNotOpen = 'trip_not_open';
+    case TripFull = 'trip_full';
+    case NotAccepted = 'not_accepted';
 
     public function status(): int
     {
@@ -28,6 +38,9 @@ enum ApiErrorCode: string
             self::PhoneTaken => 409,
             self::ProviderUnavailable => 503,
             self::Server => 500,
+            self::Forbidden, self::NotCertified, self::WomenOnlyRequired => 403,
+            self::NotTripReady, self::OwnTrip => 422,
+            self::AlreadyRequested, self::TripLocked, self::TripNotOpen, self::TripFull, self::NotAccepted => 409,
         };
     }
 }

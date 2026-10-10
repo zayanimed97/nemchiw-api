@@ -21,4 +21,6 @@ final class ProfileOptions
     public const CITY_MAX = 60;
 
     public const SEATS_MAX = 8;
+
+    public const MEDICAL_MAX = 500;
 }

@@ -4,6 +4,7 @@ namespace Modules\Identity\Http;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Identity\Contracts\CampCounts;
 use Modules\Identity\Contracts\LinkedProviders;
 use Modules\Identity\Contracts\ProfilePhotos;
 use Modules\Identity\Models\User;
@@ -36,9 +37,10 @@ final class ProfileResource extends JsonResource
                 : ['governorate' => $this->home_governorate, 'city' => $this->home_city],
             'car' => $this->car_seats === null ? null : ['seats' => $this->car_seats],
             'emergencyContact' => $this->emergency_contact,
+            'medicalInfo' => $this->medical_info,
             'providers' => app(LinkedProviders::class)->for($this->id),
             'joinedAt' => Iso::format($this->created_at),
-            'campsCount' => 0, // trips do not exist yet
+            'campsCount' => app(CampCounts::class)->for($this->id),
         ];
     }
 }

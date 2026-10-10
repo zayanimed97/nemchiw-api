@@ -19,11 +19,12 @@ final class User extends Authenticatable
     protected $fillable = [
         'first_name', 'last_name', 'gender', 'birth_date', 'email', 'level', 'skills',
         'bio', 'home_governorate', 'home_city', 'car_seats', 'emergency_contact',
+        'medical_info',
     ];
 
     /** Nothing private leaves the model by accident (toArray/json). */
     protected $hidden = [
-        'phone', 'phone_verified_at', 'email', 'gender', 'birth_date', 'last_name', 'emergency_contact',
+        'phone', 'phone_verified_at', 'email', 'gender', 'birth_date', 'last_name', 'emergency_contact', 'medical_info',
     ];
 
     protected function casts(): array
@@ -34,6 +35,7 @@ final class User extends Authenticatable
             'skills' => 'array',
             'car_seats' => 'integer',
             'emergency_contact' => 'encrypted:array',
+            'medical_info' => 'encrypted:array',
         ];
     }
 
