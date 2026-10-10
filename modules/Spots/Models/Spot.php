@@ -3,16 +3,19 @@
 namespace Modules\Spots\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Media\Contracts\PlacePhotos;
 use Modules\Shared\Places\PlaceFacts;
 use Modules\Shared\Places\PlaceKind;
+use Modules\Spots\Factories\SpotFactory;
 
 final class Spot extends Model
 {
-    use Prunable, SoftDeletes;
+    /** @use HasFactory<SpotFactory> */
+    use HasFactory, Prunable, SoftDeletes;
 
     public const TYPES = ['beach', 'forest', 'desert', 'mountain'];
 
@@ -54,5 +57,10 @@ final class Spot extends Model
     protected function pruning(): void
     {
         app(PlacePhotos::class)->forgetPlace(PlaceKind::SPOT, $this->id);
+    }
+
+    protected static function newFactory(): SpotFactory
+    {
+        return SpotFactory::new();
     }
 }

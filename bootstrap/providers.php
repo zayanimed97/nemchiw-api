@@ -12,6 +12,7 @@ use Modules\Shared\SharedServiceProvider;
 use Modules\SocialAuth\SocialAuthServiceProvider;
 use Modules\Spots\SpotsServiceProvider;
 use Modules\Trails\TrailsServiceProvider;
+use Modules\Trips\TripsServiceProvider;
 use Modules\Verification\VerificationServiceProvider;
 
 return [
@@ -25,6 +26,7 @@ return [
     SocialAuthServiceProvider::class,
     MediaServiceProvider::class,
     OrganisersServiceProvider::class,
+    TripsServiceProvider::class,
     VerificationServiceProvider::class,
     AdminServiceProvider::class,
     AdminPanelProvider::class,
