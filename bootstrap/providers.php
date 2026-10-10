@@ -6,6 +6,7 @@ use Modules\Admin\Filament\AdminPanelProvider;
 use Modules\Centres\CentresServiceProvider;
 use Modules\Identity\IdentityServiceProvider;
 use Modules\Media\MediaServiceProvider;
+use Modules\Organisers\OrganisersServiceProvider;
 use Modules\Otp\OtpServiceProvider;
 use Modules\Shared\SharedServiceProvider;
 use Modules\SocialAuth\SocialAuthServiceProvider;
@@ -23,6 +24,7 @@ return [
     OtpServiceProvider::class,
     SocialAuthServiceProvider::class,
     MediaServiceProvider::class,
+    OrganisersServiceProvider::class,
     VerificationServiceProvider::class,
     AdminServiceProvider::class,
     AdminPanelProvider::class,
