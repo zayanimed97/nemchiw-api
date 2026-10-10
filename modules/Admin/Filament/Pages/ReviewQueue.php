@@ -8,6 +8,7 @@ use Filament\Pages\Page;
 use Modules\Admin\Places\Moderate;
 use Modules\Admin\Places\PlaceModels;
 use Modules\Shared\Places\PlaceStatus;
+use Modules\Trips\Models\Trip;
 
 /** Places waiting for review, every kind, oldest first. Fed by organisers from slice 3.2. */
 final class ReviewQueue extends Page
@@ -25,7 +26,7 @@ final class ReviewQueue extends Page
         return $count > 0 ? (string) $count : null;
     }
 
-    /** @return list<array{kind: string, id: string, name: string, createdAt: string}> */
+    /** @return list<array{kind: string, id: string, name: string, createdAt: string, waitingTrip: ?string}> */
     public function getPending(): array
     {
         return collect(PlaceModels::ALL)
@@ -37,6 +38,9 @@ final class ReviewQueue extends Page
                     'id' => $place->getKey(),
                     'name' => collect($place->name)->filter()->first() ?? $place->getKey(),
                     'createdAt' => $place->created_at->toIso8601String(),
+                    'waitingTrip' => Trip::query()->where('status', 'draft')
+                        ->where('destination_kind', $kind)->where('destination_id', $place->getKey())
+                        ->value('title'),
                 ]))
             ->sortBy('createdAt')
             ->values()

@@ -6,6 +6,7 @@ use Modules\Admin\Filament\Pages\ReviewQueue;
 use Modules\Admin\Models\Admin;
 use Modules\Centres\Models\Centre;
 use Modules\Trails\Models\Trail;
+use Modules\Trips\Tests\Factories\TripFactory;
 
 beforeEach(fn () => $this->actingAs(Admin::factory()->create(), 'admin'));
 
@@ -38,4 +39,15 @@ it('needs a reason to reject', function () {
     Livewire::test(ReviewQueue::class)
         ->callAction(TestAction::make('reject')->arguments(['kind' => 'trail', 'id' => 'p']), data: ['reason' => 'Duplicate of an existing trail']);
     expect(Trail::findOrFail('p'))->status->toBe('rejected')->rejection_reason->toBe('Duplicate of an existing trail');
+});
+
+it('shows the trip waiting for a submitted place', function () {
+    Trail::factory()->create(['id' => 'ras-el-ain', 'status' => 'pending']);
+    TripFactory::new()->create([
+        'status' => 'draft', 'title' => 'Sunday loop', 'destination_kind' => 'trail', 'destination_id' => 'ras-el-ain',
+    ]);
+
+    $pending = Livewire::test(ReviewQueue::class)->instance()->getPending();
+
+    expect($pending[0]['waitingTrip'])->toBe('Sunday loop');
 });

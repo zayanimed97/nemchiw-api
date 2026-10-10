@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
             append: [LimitBodySize::class],
         );
         $middleware->throttleApi();
+        // No route is named `login`: guests on admin web routes go to the Filament login.
+        $middleware->redirectGuestsTo(fn () => route('filament.admin.auth.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         ApiExceptionRenderer::register($exceptions);
