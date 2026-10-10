@@ -124,3 +124,21 @@ php artisan migrate --force && php artisan filament:assets && php artisan optimi
   `php -r 'var_dump(gd_info()["WebP Support"] ?? false);'` (must print `true`).
 - `public/media/places` must be writable by PHP. Its `.htaccess` serves the photos with a
   one-year immutable cache header.
+
+## Slice 3.2: trips and organisers
+
+```bash
+php artisan migrate --force && php artisan filament:assets && php artisan optimize
+```
+
+- New tables: `organisers`, `organiser_applications`, `organiser_documents`, `trips`,
+  `trip_requests`, `trip_request_members`, `trip_reports`; `users.medical_info` (encrypted).
+- `ORGANISER_DOCUMENTS_DISK`: set it only if the documents should not go on the `local` disk.
+  They live under `storage/app/private/organiser-documents`, never under `public/`. Decide on
+  purpose whether backups include that folder (INPDP: identity documents).
+- The scheduler now carries the trip lifecycle. Confirm hPanel → Advanced → Cron Jobs runs
+  `php artisan schedule:run` every minute, and that `php artisan schedule:list` shows
+  `trips:tick` (hourly: lapse, finish, counters) and `organisers:purge-documents` (hourly:
+  deletes documents 30 days after a refusal or revocation).
+- Admins see organiser documents at `/admin/documents/{id}` only; each view is written to
+  `admin_actions`.
