@@ -32,3 +32,5 @@ function tripReady(array $attributes = []): User
 
     return $user;
 }
+
+require_once __DIR__.'/../modules/Chat/tests/Support.php';

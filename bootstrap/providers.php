@@ -4,6 +4,7 @@ use App\Providers\AppServiceProvider;
 use Modules\Admin\AdminServiceProvider;
 use Modules\Admin\Filament\AdminPanelProvider;
 use Modules\Centres\CentresServiceProvider;
+use Modules\Chat\ChatServiceProvider;
 use Modules\Identity\IdentityServiceProvider;
 use Modules\Media\MediaServiceProvider;
 use Modules\Organisers\OrganisersServiceProvider;
@@ -27,6 +28,7 @@ return [
     MediaServiceProvider::class,
     OrganisersServiceProvider::class,
     TripsServiceProvider::class,
+    ChatServiceProvider::class,
     VerificationServiceProvider::class,
     AdminServiceProvider::class,
     AdminPanelProvider::class,
