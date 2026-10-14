@@ -11,7 +11,9 @@ use Modules\Identity\Contracts\CampCounts;
 use Modules\Shared\Places\PlaceModerated;
 use Modules\Shared\Providers\ModuleServiceProvider;
 use Modules\Trips\Actions\Tick;
+use Modules\Trips\Contracts\TripRequests;
 use Modules\Trips\Listeners\SettleDraftTrips;
+use Modules\Trips\Services\EloquentTripRequests;
 use Modules\Trips\Services\TripCampCounts;
 
 class TripsServiceProvider extends ModuleServiceProvider
@@ -25,6 +27,7 @@ class TripsServiceProvider extends ModuleServiceProvider
     {
         parent::register();
         $this->app->singleton(CampCounts::class, TripCampCounts::class);
+        $this->app->singleton(TripRequests::class, EloquentTripRequests::class);
     }
 
     public function boot(): void

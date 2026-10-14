@@ -4,6 +4,7 @@ namespace Modules\Trips\Actions;
 
 use Illuminate\Support\Facades\DB;
 use Modules\Organisers\Contracts\OrganiserRecords;
+use Modules\Shared\Events\ReportResolved;
 use Modules\Trips\Models\Trip;
 use Modules\Trips\Models\TripReport;
 use Modules\Trips\Models\TripRequest;
@@ -35,6 +36,7 @@ final class ResolveReport
                 $this->records->bump(Trip::query()->whereKey($request->trip_id)->value('organiser_id'), 'cancelled_campers');
             }
             $report->forceFill(['status' => $outcome, 'resolved_at' => now(), 'resolved_by' => $adminId])->save();
+            event(new ReportResolved($request->id, $request->trip_id, $report->reporter_id, $outcome));
         });
     }
 }

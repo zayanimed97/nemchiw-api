@@ -27,6 +27,9 @@ enum ApiErrorCode: string
     case TripNotOpen = 'trip_not_open';
     case TripFull = 'trip_full';
     case NotAccepted = 'not_accepted';
+    case ConversationClosed = 'conversation_closed';
+    case MessageTooLong = 'message_too_long';
+    case PhotoInvalid = 'photo_invalid';
 
     public function status(): int
     {
@@ -39,8 +42,8 @@ enum ApiErrorCode: string
             self::ProviderUnavailable => 503,
             self::Server => 500,
             self::Forbidden, self::NotCertified, self::WomenOnlyRequired => 403,
-            self::NotTripReady, self::OwnTrip => 422,
-            self::AlreadyRequested, self::TripLocked, self::TripNotOpen, self::TripFull, self::NotAccepted => 409,
+            self::NotTripReady, self::OwnTrip, self::MessageTooLong, self::PhotoInvalid => 422,
+            self::AlreadyRequested, self::TripLocked, self::TripNotOpen, self::TripFull, self::NotAccepted, self::ConversationClosed => 409,
         };
     }
 }
