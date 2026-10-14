@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'message_title' => ':name · :trip',
+    'photo' => 'تصويرة',
+    'location' => 'البلاصة',
+    'new_request' => 'طلب جديد · :trip',
+    'new_request_body' => ':name يحب يجي معاكم',
+    'withdrawn' => ':name بطّل · :trip',
+    'accepted' => 'تقبلت · :trip',
+    'accepted_body' => 'خلّص :name وسكاني الكود',
+    'accepted_body_free' => 'تلاقى مع :name وسكاني الكود',
+    'declined' => 'الطلب ما تقبلش · :trip',
+    'cancelled' => 'الطلب تلغى · :trip',
+    'joined_you' => 'راك معاهم · :trip',
+    'joined' => ':name دخل للخرجة · :trip',
+    'trip_cancelled' => 'الخرجة تلغات · :trip',
+    'reminder' => 'غدوة · :trip',
+    'reminder_meetup' => 'الموعد على :time',
+    'reminder_pay' => 'خلّص وسكاني الكود قبل ما تمشي',
+    'application_approved' => 'طلبك باش تولّي منظّم تقبل',
+    'application_rejected' => 'طلبك باش تولّي منظّم يستحق تبديلات',
+    'application_revoked' => 'الشهادة متاع المنظّم تنحّات',
+    'place_live' => ':place ولّات على الخريطة',
+    'place_rejected' => ':place ما تقبلتش',
+    'report_reviewed' => 'البلاغ متاعك على :trip تشاف',
+];

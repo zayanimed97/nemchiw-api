@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'message_title' => ':name · :trip',
+    'photo' => 'Photo',
+    'location' => 'Location',
+    'new_request' => 'New request · :trip',
+    'new_request_body' => ':name wants to join',
+    'withdrawn' => ':name withdrew · :trip',
+    'accepted' => "You're accepted · :trip",
+    'accepted_body' => 'Pay :name and scan the code',
+    'accepted_body_free' => 'Meet :name and scan the code',
+    'declined' => 'Request declined · :trip',
+    'cancelled' => 'Request cancelled · :trip',
+    'joined_you' => "You're in · :trip",
+    'joined' => ':name joined · :trip',
+    'trip_cancelled' => 'Trip cancelled · :trip',
+    'reminder' => 'Tomorrow · :trip',
+    'reminder_meetup' => 'Meetup at :time',
+    'reminder_pay' => 'Pay and scan the code before you go',
+    'application_approved' => 'Your organiser application was approved',
+    'application_rejected' => 'Your organiser application needs changes',
+    'application_revoked' => 'Your organiser certification was withdrawn',
+    'place_live' => ':place is on the map',
+    'place_rejected' => ':place was not accepted',
+    'report_reviewed' => 'Your report on :trip was reviewed',
+];

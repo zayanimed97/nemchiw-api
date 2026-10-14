@@ -9,6 +9,7 @@ use Modules\Identity\IdentityServiceProvider;
 use Modules\Media\MediaServiceProvider;
 use Modules\Organisers\OrganisersServiceProvider;
 use Modules\Otp\OtpServiceProvider;
+use Modules\Push\PushServiceProvider;
 use Modules\Shared\SharedServiceProvider;
 use Modules\SocialAuth\SocialAuthServiceProvider;
 use Modules\Spots\SpotsServiceProvider;
@@ -29,6 +30,7 @@ return [
     OrganisersServiceProvider::class,
     TripsServiceProvider::class,
     ChatServiceProvider::class,
+    PushServiceProvider::class,
     VerificationServiceProvider::class,
     AdminServiceProvider::class,
     AdminPanelProvider::class,

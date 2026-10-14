@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'message_title' => ':name · :trip',
+    'photo' => 'Photo',
+    'location' => 'Position',
+    'new_request' => 'Nouvelle demande · :trip',
+    'new_request_body' => ':name veut participer',
+    'withdrawn' => ':name a retiré sa demande · :trip',
+    'accepted' => 'Demande acceptée · :trip',
+    'accepted_body' => 'Payez :name et scannez le code',
+    'accepted_body_free' => 'Retrouvez :name et scannez le code',
+    'declined' => 'Demande refusée · :trip',
+    'cancelled' => 'Demande annulée · :trip',
+    'joined_you' => 'C’est confirmé · :trip',
+    'joined' => ':name a rejoint · :trip',
+    'trip_cancelled' => 'Sortie annulée · :trip',
+    'reminder' => 'Demain · :trip',
+    'reminder_meetup' => 'Rendez-vous à :time',
+    'reminder_pay' => 'Payez et scannez le code avant de partir',
+    'application_approved' => 'Votre demande d’organisateur est acceptée',
+    'application_rejected' => 'Votre demande d’organisateur demande des modifications',
+    'application_revoked' => 'Votre certification d’organisateur a été retirée',
+    'place_live' => ':place est sur la carte',
+    'place_rejected' => ':place n’a pas été accepté',
+    'report_reviewed' => 'Votre signalement sur :trip a été examiné',
+];
