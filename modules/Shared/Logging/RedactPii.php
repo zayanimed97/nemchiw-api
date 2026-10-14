@@ -5,10 +5,11 @@ namespace Modules\Shared\Logging;
 use Monolog\LogRecord;
 use Monolog\Processor\ProcessorInterface;
 
-/** Keeps phone numbers, OTP codes, tokens and secrets out of log files. */
+/** Keeps phone numbers, OTP codes, tokens, secrets, message bodies and coordinates out of log files. */
 final class RedactPii implements ProcessorInterface
 {
     private const SECRET_KEYS = [
+        'body', 'lat', 'lng',
         'code', 'otp', 'token', 'password', 'authorization', 'api_key', 'apikey',
         'secret', 'phone', 'session_token', 'sessiontoken', 'emergency_contact',
     ];

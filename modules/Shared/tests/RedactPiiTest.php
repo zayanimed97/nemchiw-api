@@ -3,7 +3,9 @@
 use Modules\Shared\Logging\RedactPii;
 use Modules\Shared\Logging\RedactPiiTap;
 use Monolog\Handler\TestHandler;
+use Monolog\Level;
 use Monolog\Logger;
+use Monolog\LogRecord;
 
 it('scrubs phones, tokens and secret keys from logs', function () {
     $handler = new TestHandler;
@@ -27,4 +29,12 @@ it('is tapped onto the log channels', function () {
     foreach (['stack', 'single', 'daily'] as $channel) {
         expect(config("logging.channels.$channel.tap"))->toContain(RedactPiiTap::class);
     }
+});
+
+it('keeps message bodies and coordinates out of the logs', function () {
+    $record = new LogRecord(new DateTimeImmutable, 'app', Level::Warning, 'x', ['body' => 'meet me at the fountain', 'lat' => 36.4, 'lng' => 10.1]);
+
+    $context = (new RedactPii)($record)->context;
+
+    expect($context)->toBe(['body' => '[redacted]', 'lat' => '[redacted]', 'lng' => '[redacted]']);
 });

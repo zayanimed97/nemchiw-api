@@ -9,12 +9,14 @@ use Illuminate\Support\Facades\RateLimiter;
 use Modules\Chat\Contracts\ConversationDirectory;
 use Modules\Chat\Listeners\CloseFinishedTrip;
 use Modules\Chat\Listeners\FollowRequest;
+use Modules\Chat\Listeners\ForgetSender;
 use Modules\Chat\Listeners\NoteTripEdit;
 use Modules\Chat\Listeners\OpenConversation;
 use Modules\Chat\Realtime\NullRealtime;
 use Modules\Chat\Realtime\PusherRealtime;
 use Modules\Chat\Realtime\Realtime;
 use Modules\Chat\Services\EloquentConversationDirectory;
+use Modules\Identity\Events\AccountDeleting;
 use Modules\Shared\Events\RequestChanged;
 use Modules\Shared\Events\TripEdited;
 use Modules\Shared\Events\TripFinished;
@@ -53,6 +55,7 @@ class ChatServiceProvider extends ModuleServiceProvider
         Event::listen(RequestChanged::class, FollowRequest::class);
         Event::listen(TripEdited::class, NoteTripEdit::class);
         Event::listen(TripFinished::class, CloseFinishedTrip::class);
+        Event::listen(AccountDeleting::class, ForgetSender::class);
 
         RateLimiter::for('chat-messages', fn (Request $request) => Limit::perMinute((int) config('chat.messages_per_minute'))
             ->by('user:'.$request->user()?->getAuthIdentifier()));

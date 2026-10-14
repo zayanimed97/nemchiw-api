@@ -142,3 +142,21 @@ php artisan migrate --force && php artisan filament:assets && php artisan optimi
   deletes documents 30 days after a refusal or revocation).
 - Admins see organiser documents at `/admin/documents/{id}` only; each view is written to
   `admin_actions`.
+
+## Slice 3.3: chat and push
+
+```bash
+composer install --no-dev --optimize-autoloader
+php artisan migrate --force && php artisan optimize
+```
+
+- New tables: `conversations`, `messages`, `conversation_reads`, `push_tokens`; `trips.reminded_at`.
+- Ably: create an app, Settings → Protocol Adapter Settings → turn on **Pusher protocol support**,
+  accept the `public:`/`private:`/`presence:` namespaces, and turn **Require identification**
+  off on them (error 40160 otherwise). Put the key in `.env` as above.
+- Chat photos live in `storage/app/private/chat/<conversation id>/`, never under `public/`.
+  Decide on purpose whether backups include that folder (INPDP).
+- Pushes and realtime run after the response (`defer()`), so LiteSpeed must finish the request
+  first: check that a chat message answers fast even with Ably's key wrong.
+- The day-before reminder rides on the hourly `trips:tick`: the cron must be running.
+- Check: `curl -s -H 'Accept: application/json' https://api.lunara-tn.com/api/v1/me/conversations` → 401.
