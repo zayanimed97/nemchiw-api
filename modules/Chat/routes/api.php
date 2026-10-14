@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Chat\Http\BroadcastAuthController;
 use Modules\Chat\Http\ConversationsController;
 use Modules\Chat\Http\MessagesController;
 use Modules\Chat\Http\PhotoController;
@@ -11,6 +12,7 @@ $ulid = '[0-9A-Za-z]{26}'; // Laravel stores ULIDs lowercase
 
 Route::middleware('auth:sanctum')->group(function () use ($ulid) {
     Route::get('me/conversations', ConversationsController::class);
+    Route::post('broadcasting/auth', BroadcastAuthController::class)->middleware('throttle:60,1');
     Route::get('conversations/{id}/messages', [MessagesController::class, 'index'])->where('id', $ulid);
     Route::post('conversations/{id}/messages', [MessagesController::class, 'store'])
         ->where('id', $ulid)

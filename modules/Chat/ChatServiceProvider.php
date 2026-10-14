@@ -12,12 +12,14 @@ use Modules\Chat\Listeners\FollowRequest;
 use Modules\Chat\Listeners\NoteTripEdit;
 use Modules\Chat\Listeners\OpenConversation;
 use Modules\Chat\Realtime\NullRealtime;
+use Modules\Chat\Realtime\PusherRealtime;
 use Modules\Chat\Realtime\Realtime;
 use Modules\Chat\Services\EloquentConversationDirectory;
 use Modules\Shared\Events\RequestChanged;
 use Modules\Shared\Events\TripEdited;
 use Modules\Shared\Events\TripFinished;
 use Modules\Shared\Providers\ModuleServiceProvider;
+use Pusher\Pusher;
 
 class ChatServiceProvider extends ModuleServiceProvider
 {
@@ -30,7 +32,17 @@ class ChatServiceProvider extends ModuleServiceProvider
     {
         parent::register();
         $this->app->singleton(ConversationDirectory::class, EloquentConversationDirectory::class);
-        $this->app->singleton(Realtime::class, NullRealtime::class);
+        $this->app->singleton(Realtime::class, function () {
+            $config = (array) config('chat.realtime');
+            if (empty($config['key']) || empty($config['secret']) || empty($config['app_id'])) {
+                return new NullRealtime;
+            }
+
+            return new PusherRealtime(new Pusher(
+                (string) $config['key'], (string) $config['secret'], (string) $config['app_id'],
+                ['host' => (string) $config['host'], 'port' => 443, 'scheme' => 'https', 'useTLS' => true],
+            ));
+        });
     }
 
     public function boot(): void
