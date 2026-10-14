@@ -4,6 +4,8 @@ namespace Modules\Trips\Actions;
 
 use Illuminate\Support\Facades\DB;
 use Modules\Organisers\Contracts\OrganiserRecords;
+use Modules\Shared\Events\TripFinished;
+use Modules\Shared\Events\TripReminderDue;
 use Modules\Trips\Models\Trip;
 use Modules\Trips\Models\TripRequest;
 use Modules\Trips\Support\RequestStatus;
@@ -40,7 +42,23 @@ final class Tick
                     $this->records->bump($trip->organiser_id, 'trips_run');
                     $this->records->bump($trip->organiser_id, 'campers_joined', $joined);
                 }
+                event(new TripFinished($trip->id));
             });
         });
+
+        // The day-before reminder. Claimed with a conditional update so two overlapping runs
+        // cannot both send it.
+        Trip::query()
+            ->where('status', TripStatus::PUBLISHED)
+            ->whereNull('reminded_at')
+            ->whereBetween('starts_at', [
+                now()->addHours((int) config('trips.reminder_from_hours')),
+                now()->addHours((int) config('trips.reminder_to_hours')),
+            ])
+            ->each(function (Trip $trip) {
+                if (Trip::query()->whereKey($trip->id)->whereNull('reminded_at')->update(['reminded_at' => now()]) === 1) {
+                    event(new TripReminderDue($trip->id));
+                }
+            });
     }
 }

@@ -10,6 +10,7 @@ use Modules\Identity\Contracts\People;
 use Modules\Organisers\Contracts\OrganiserRecords;
 use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
+use Modules\Shared\Events\TripEdited;
 use Modules\Shared\Places\PlaceDirectory;
 use Modules\Shared\Places\PlaceStatus;
 use Modules\Trips\Models\Trip;
@@ -75,7 +76,14 @@ final class SaveTrip
                 [$snapshot, $status] = $this->destination($data['destination'], $actorId);
                 $columns += ['destination_kind' => $data['destination']['kind'], 'destination_id' => $data['destination']['id'], 'destination' => $snapshot, 'status' => $status];
             }
+            $edited = array_values(array_filter(
+                ['meetupAt', 'meetupUrl'],
+                fn (string $field) => array_key_exists($field, $data) && $this->changes($trip, $field, $data[$field]),
+            ));
             $trip->fill($columns)->save();
+            if ($edited !== [] && $trip->status === TripStatus::PUBLISHED) {
+                event(new TripEdited($trip->id, $trip->organiser_id, $edited));
+            }
 
             return $trip;
         });
@@ -171,6 +179,8 @@ final class SaveTrip
             'startsAt' => ! CarbonImmutable::parse($value)->equalTo($trip->starts_at),
             'endsAt' => ! CarbonImmutable::parse($value)->equalTo($trip->ends_at),
             'destination' => $value['kind'] !== $trip->destination_kind || $value['id'] !== $trip->destination_id,
+            'meetupAt' => ! CarbonImmutable::parse($value)->equalTo($trip->meetup_at),
+            'meetupUrl' => $value !== $trip->meetup_url,
         };
     }
 }

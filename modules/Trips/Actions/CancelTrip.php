@@ -27,11 +27,12 @@ final class CancelTrip
                 throw new ApiException(ApiErrorCode::TripNotOpen, 'This trip is already closed');
             }
             $cancelledCampers = 0;
+            $by = $counts ? 'organiser' : 'system';
             foreach (TripRequest::query()->where('trip_id', $trip->id)->whereIn('status', RequestStatus::OPEN)->get() as $request) {
                 if ($request->status === RequestStatus::PENDING) {
-                    $this->transitions->end($request, RequestStatus::DECLINED, 'organiser');
+                    $this->transitions->end($request, RequestStatus::DECLINED, $by, 'trip_cancelled');
                 } else {
-                    $this->transitions->end($request, RequestStatus::CANCELLED, 'organiser');
+                    $this->transitions->end($request, RequestStatus::CANCELLED, $by, 'trip_cancelled');
                     $cancelledCampers++;
                 }
             }

@@ -8,6 +8,7 @@ use Modules\Identity\Contracts\People;
 use Modules\Organisers\Contracts\OrganiserRecords;
 use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
+use Modules\Shared\Events\RequestChanged;
 use Modules\Trips\Models\Trip;
 use Modules\Trips\Models\TripRequest;
 use Modules\Trips\Models\TripRequestMember;
@@ -47,6 +48,7 @@ final class RequestTransitions
                 'trip_id' => $trip->id, 'leader_id' => $userId, 'note' => $note, 'status' => RequestStatus::PENDING,
             ]);
             TripRequestMember::query()->create(['request_id' => $request->id, 'user_id' => $userId]);
+            event(new RequestChanged($request->id, $trip->id, $userId, $trip->organiser_id, 'asked', 'camper', $note));
 
             return $request;
         });
@@ -61,6 +63,7 @@ final class RequestTransitions
                 'accepted_at' => now(),
                 'code_secret' => base64_encode(random_bytes(32)),
             ])->save();
+            event(new RequestChanged($request->id, $trip->id, $request->leader_id, $trip->organiser_id, 'accepted', 'organiser'));
         });
     }
 
@@ -87,10 +90,16 @@ final class RequestTransitions
         });
     }
 
-    /** Ends a request: status, who, when. The code secret goes with it. */
-    public function end(TripRequest $request, string $status, string $by): void
+    /**
+     * Ends a request: status, who, when. The code secret goes with it. `$change` names the
+     * event when it differs from the status (a trip cancellation ends requests as declined
+     * or cancelled, and tells people the trip was cancelled).
+     */
+    public function end(TripRequest $request, string $status, string $by, ?string $change = null): void
     {
         $request->forceFill(['status' => $status, 'ended_at' => now(), 'ended_by' => $by, 'code_secret' => null])->save();
+        $organiserId = (string) Trip::query()->whereKey($request->trip_id)->value('organiser_id');
+        event(new RequestChanged($request->id, $request->trip_id, $request->leader_id, $organiserId, $change ?? $status, $by));
     }
 
     public function assertOpen(Trip $trip): void

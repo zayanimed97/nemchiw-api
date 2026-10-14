@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
+use Modules\Shared\Events\RequestChanged;
 use Modules\Trips\Models\Trip;
 use Modules\Trips\Models\TripRequest;
 use Modules\Trips\Models\TripRequestMember;
@@ -44,6 +45,7 @@ final class ScanJoinCode
             }
             $request->forceFill(['status' => RequestStatus::JOINED, 'joined_at' => now(), 'code_secret' => null])->save();
             TripRequestMember::query()->where('request_id', $request->id)->update(['scanned_at' => now()]);
+            event(new RequestChanged($request->id, $trip->id, $request->leader_id, $trip->organiser_id, 'scanned', 'camper'));
 
             return $request;
         });

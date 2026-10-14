@@ -27,6 +27,7 @@ final class Trip extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'reminded_at' => 'datetime',
             'seats' => 'integer',
             'price_tnd' => 'integer',
             'women_only' => 'boolean',

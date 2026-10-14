@@ -12,4 +12,8 @@ return [
     // Wrong codes allowed per request in `code_lock_seconds` before scanning locks.
     'code_max_attempts' => 5,
     'code_lock_seconds' => 600,
+    // The day-before reminder goes to trips starting this many hours from the hourly tick.
+    // The window is wider than an hour so each trip is caught once.
+    'reminder_from_hours' => 20,
+    'reminder_to_hours' => 30,
 ];
