@@ -44,7 +44,5 @@ class ChatServiceProvider extends ModuleServiceProvider
 
         RateLimiter::for('chat-messages', fn (Request $request) => Limit::perMinute((int) config('chat.messages_per_minute'))
             ->by('user:'.$request->user()?->getAuthIdentifier()));
-        RateLimiter::for('chat-photos', fn (Request $request) => Limit::perHour((int) config('chat.photos_per_hour'))
-            ->by('user:'.$request->user()?->getAuthIdentifier()));
     }
 }
