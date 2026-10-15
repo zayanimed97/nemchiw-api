@@ -106,8 +106,8 @@ it('announces a meetup change, not other edits', function () {
     $trip = TripFactory::new()->create();
     $momen = User::find($trip->organiser_id);
 
-    $this->withToken(tokenFor($momen))->patchJson("/api/v1/trips/{$trip->id}", ['title' => 'New title'])->assertOk();
-    $this->withToken(tokenFor($momen))->patchJson("/api/v1/trips/{$trip->id}", ['meetupAt' => $trip->meetup_at->copy()->subMinutes(30)->toIso8601String()])->assertOk();
+    $this->withToken(tokenFor($momen))->postJson("/api/v1/trips/{$trip->id}", ['title' => 'New title'])->assertOk();
+    $this->withToken(tokenFor($momen))->postJson("/api/v1/trips/{$trip->id}", ['meetupAt' => $trip->meetup_at->copy()->subMinutes(30)->toIso8601String()])->assertOk();
 
     expect($seen)->toHaveCount(1);
     expect($seen[0]->fields)->toBe(['meetupAt']);

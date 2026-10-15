@@ -8,7 +8,7 @@ beforeEach(function () {
 });
 
 it('updates every editable field', function () {
-    $this->patchJson('/api/v1/me', [
+    $this->postJson('/api/v1/me', [
         'firstName' => 'Salma',
         'lastName' => 'Ben Ali',
         'gender' => 'female',
@@ -32,19 +32,19 @@ it('updates every editable field', function () {
 });
 
 it('changes only the fields sent, and null clears optional ones', function () {
-    $this->patchJson('/api/v1/me', ['lastName' => 'Trabelsi', 'car' => ['seats' => 2]])->assertOk();
-    $this->patchJson('/api/v1/me', ['car' => null])->assertOk()
+    $this->postJson('/api/v1/me', ['lastName' => 'Trabelsi', 'car' => ['seats' => 2]])->assertOk();
+    $this->postJson('/api/v1/me', ['car' => null])->assertOk()
         ->assertJson(['firstName' => 'Sami', 'lastName' => 'Trabelsi', 'car' => null]);
 });
 
 it('ignores fields that are not editable', function () {
-    $this->patchJson('/api/v1/me', ['phone' => '+21655555555', 'id' => 'x', 'campsCount' => 99, 'firstName' => 'Sami'])
+    $this->postJson('/api/v1/me', ['phone' => '+21655555555', 'id' => 'x', 'campsCount' => 99, 'firstName' => 'Sami'])
         ->assertOk()
         ->assertJson(['phone' => '+21620123456', 'id' => $this->user->id, 'campsCount' => 0]);
 });
 
 it('rejects invalid values with the field name', function (array $patch, string $field) {
-    $this->patchJson('/api/v1/me', $patch)
+    $this->postJson('/api/v1/me', $patch)
         ->assertStatus(422)
         ->assertJsonPath('code', 'validation')
         ->assertJsonStructure(['errors' => [$field]]);
@@ -71,6 +71,6 @@ it('rejects invalid values with the field name', function (array $patch, string 
 ]);
 
 it('counts characters, not bytes, for Arabic names', function () {
-    $this->patchJson('/api/v1/me', ['firstName' => str_repeat('س', 40)])->assertOk();
-    $this->patchJson('/api/v1/me', ['firstName' => str_repeat('س', 41)])->assertStatus(422);
+    $this->postJson('/api/v1/me', ['firstName' => str_repeat('س', 40)])->assertOk();
+    $this->postJson('/api/v1/me', ['firstName' => str_repeat('س', 41)])->assertStatus(422);
 });

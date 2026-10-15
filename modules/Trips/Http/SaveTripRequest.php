@@ -7,12 +7,12 @@ use Illuminate\Validation\Rule;
 use Modules\Shared\Places\PlaceKind;
 use Modules\Trips\Support\TripKind;
 
-/** POST /trips (every field) and PATCH /trips/{id} (any subset). Cross-field rules run in SaveTrip. */
+/** POST /trips (every field) and POST or PATCH /trips/{id} (any subset). Cross-field rules run in SaveTrip. */
 final class SaveTripRequest extends FormRequest
 {
     public function rules(): array
     {
-        $create = $this->isMethod('post');
+        $create = $this->route('id') === null; // edits arrive as POST too (host firewall)
         $req = $create ? 'required' : 'sometimes';
 
         return [

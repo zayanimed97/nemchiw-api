@@ -17,7 +17,7 @@ it('keeps the conversation for the other side when someone deletes their account
         'photo' => UploadedFile::fake()->createWithContent('a.jpg', Images::jpeg()),
     ], ['Accept' => 'application/json'])->assertCreated()->json('photo.hash');
 
-    $this->withToken(tokenFor($camper))->deleteJson('/api/v1/me')->assertNoContent();
+    $this->withToken(tokenFor($camper))->postJson('/api/v1/me/delete')->assertNoContent();
 
     $feed = $this->withToken(tokenFor($organiser))->getJson('/api/v1/me/conversations')->assertOk();
     $feed->assertJsonPath('data.0.id', $conversation->id)

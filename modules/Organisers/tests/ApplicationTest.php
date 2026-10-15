@@ -33,7 +33,7 @@ it('says there is no application yet', function () {
 it('only lets trip-ready people apply', function () {
     $user = User::factory()->create();
 
-    $this->withToken(tokenFor($user))->putJson('/api/v1/me/organiser-application', fields())
+    $this->withToken(tokenFor($user))->postJson('/api/v1/me/organiser-application', fields())
         ->assertStatus(422)->assertJsonPath('code', 'not_trip_ready');
 });
 
@@ -41,7 +41,7 @@ it('builds a draft, stores documents privately and sends it for review', functio
     $user = tripReady();
     $token = tokenFor($user);
 
-    $this->withToken($token)->putJson('/api/v1/me/organiser-application', fields())
+    $this->withToken($token)->postJson('/api/v1/me/organiser-application', fields())
         ->assertOk()->assertJsonPath('status', 'draft')->assertJsonPath('documents.licence', false);
     uploadAll($this, $token);
 
@@ -59,7 +59,7 @@ it('builds a draft, stores documents privately and sends it for review', functio
 it('will not send an application with a missing document', function () {
     $user = tripReady();
     $token = tokenFor($user);
-    $this->withToken($token)->putJson('/api/v1/me/organiser-application', fields());
+    $this->withToken($token)->postJson('/api/v1/me/organiser-application', fields());
     $this->withToken($token)->post('/api/v1/me/organiser-application/documents/id_front', ['file' => UploadedFile::fake()->image('a.jpg')]);
 
     $this->withToken($token)->postJson('/api/v1/me/organiser-application/submit')
@@ -69,7 +69,7 @@ it('will not send an application with a missing document', function () {
 it('replaces a document of the same type and deletes the old file', function () {
     $user = tripReady();
     $token = tokenFor($user);
-    $this->withToken($token)->putJson('/api/v1/me/organiser-application', fields());
+    $this->withToken($token)->postJson('/api/v1/me/organiser-application', fields());
     $this->withToken($token)->post('/api/v1/me/organiser-application/documents/licence', ['file' => UploadedFile::fake()->image('old.jpg')]);
     $old = OrganiserApplication::query()->sole()->documents->sole()->path;
 
@@ -82,7 +82,7 @@ it('replaces a document of the same type and deletes the old file', function () 
 it('rejects files that are not images or PDFs, or over 10 MB', function () {
     $user = tripReady();
     $token = tokenFor($user);
-    $this->withToken($token)->putJson('/api/v1/me/organiser-application', fields());
+    $this->withToken($token)->postJson('/api/v1/me/organiser-application', fields());
 
     $this->withToken($token)->post('/api/v1/me/organiser-application/documents/licence', ['file' => UploadedFile::fake()->create('a.exe', 10)])
         ->assertStatus(422);
@@ -93,25 +93,25 @@ it('rejects files that are not images or PDFs, or over 10 MB', function () {
 it('locks the application while it is in review, reopens it after a refusal', function () {
     $user = tripReady();
     $token = tokenFor($user);
-    $this->withToken($token)->putJson('/api/v1/me/organiser-application', fields());
+    $this->withToken($token)->postJson('/api/v1/me/organiser-application', fields());
     uploadAll($this, $token);
     $this->withToken($token)->postJson('/api/v1/me/organiser-application/submit');
 
-    $this->withToken($token)->putJson('/api/v1/me/organiser-application', fields())
+    $this->withToken($token)->postJson('/api/v1/me/organiser-application', fields())
         ->assertStatus(409)->assertJsonPath('code', 'already_requested');
 
     app(DecideApplication::class)->reject(OrganiserApplication::query()->sole(), 'Licence is unreadable');
     $this->withToken($token)->getJson('/api/v1/me/organiser-application')
         ->assertJsonPath('status', 'rejected')->assertJsonPath('rejectionReason', 'Licence is unreadable');
 
-    $this->withToken($token)->putJson('/api/v1/me/organiser-application', fields())
+    $this->withToken($token)->postJson('/api/v1/me/organiser-application', fields())
         ->assertOk()->assertJsonPath('status', 'draft');
 });
 
 it('certifies on approval and uncertifies on revocation', function () {
     $user = tripReady();
     $token = tokenFor($user);
-    $this->withToken($token)->putJson('/api/v1/me/organiser-application', fields());
+    $this->withToken($token)->postJson('/api/v1/me/organiser-application', fields());
     uploadAll($this, $token);
     $this->withToken($token)->postJson('/api/v1/me/organiser-application/submit');
     $application = OrganiserApplication::query()->sole();

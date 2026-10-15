@@ -114,16 +114,16 @@ it('lets only the organiser edit, and locks dates, price and place once someone 
     $momen = certified();
     $trip = TripFactory::new()->create(['organiser_id' => $momen->id, 'seats' => 8]);
 
-    $this->withToken(tokenFor(tripReady()))->patchJson("/api/v1/trips/{$trip->id}", ['title' => 'Mine now'])
+    $this->withToken(tokenFor(tripReady()))->postJson("/api/v1/trips/{$trip->id}", ['title' => 'Mine now'])
         ->assertStatus(403)->assertJsonPath('code', 'forbidden');
-    $this->withToken(tokenFor($momen))->patchJson("/api/v1/trips/{$trip->id}", ['priceTnd' => 150])
+    $this->withToken(tokenFor($momen))->postJson("/api/v1/trips/{$trip->id}", ['priceTnd' => 150])
         ->assertOk()->assertJsonPath('priceTnd', 150);
 
     TripRequestFactory::new()->joined()->forTrip($trip)->create();
-    $this->withToken(tokenFor($momen))->patchJson("/api/v1/trips/{$trip->id}", ['priceTnd' => 200])
+    $this->withToken(tokenFor($momen))->postJson("/api/v1/trips/{$trip->id}", ['priceTnd' => 200])
         ->assertStatus(409)->assertJsonPath('code', 'trip_locked');
-    $this->withToken(tokenFor($momen))->patchJson("/api/v1/trips/{$trip->id}", ['description' => 'Bring a head torch.'])
+    $this->withToken(tokenFor($momen))->postJson("/api/v1/trips/{$trip->id}", ['description' => 'Bring a head torch.'])
         ->assertOk();
-    $this->withToken(tokenFor($momen))->patchJson("/api/v1/trips/{$trip->id}", ['seats' => 0])
+    $this->withToken(tokenFor($momen))->postJson("/api/v1/trips/{$trip->id}", ['seats' => 0])
         ->assertStatus(422);
 });

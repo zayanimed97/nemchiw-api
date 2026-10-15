@@ -7,7 +7,8 @@ use Modules\Shared\Http\LimitBodySize;
 
 Route::middleware('auth:sanctum')->prefix('me/organiser-application')->group(function () {
     Route::get('/', [ApplicationController::class, 'show']);
-    Route::put('/', [ApplicationController::class, 'update']);
+    // POST twin: the host's firewall bans IPs that send PUT (see Identity routes).
+    Route::match(['post', 'put'], '/', [ApplicationController::class, 'update']);
     Route::post('documents/{type}', [ApplicationController::class, 'document'])
         ->withoutMiddleware(LimitBodySize::class)
         ->middleware(LimitBodySize::class.':'.config('organisers.max_body_bytes'));

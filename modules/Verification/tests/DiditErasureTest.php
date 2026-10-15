@@ -20,7 +20,7 @@ it('queues an erase at Didit for every session when the account is deleted', fun
         (new VerificationSession)->forceFill(['session_id' => $id, 'user_id' => $user->id, 'photo_id' => '01J8Z3Q4X5Y6Z7A8B9C0D1E2F3'])->save();
     }
 
-    $this->withToken(tokenFor($user))->deleteJson('/api/v1/me')->assertNoContent();
+    $this->withToken(tokenFor($user))->postJson('/api/v1/me/delete')->assertNoContent();
 
     Queue::assertPushed(EraseDiditSession::class, 2);
     Queue::assertPushed(EraseDiditSession::class, fn ($job) => $job->sessionId === 'sess-2');

@@ -69,7 +69,7 @@ it('notes a meetup change in open conversations only', function () {
     $earlier = $trip->meetup_at->copy()->subHour(); // copy(): Eloquent dates are mutable
 
     $this->withToken(tokenFor(User::find($trip->organiser_id)))
-        ->patchJson("/api/v1/trips/{$trip->id}", ['meetupAt' => $earlier->toIso8601String()])->assertOk();
+        ->postJson("/api/v1/trips/{$trip->id}", ['meetupAt' => $earlier->toIso8601String()])->assertOk();
 
     $last = fn ($c) => Message::query()->where('conversation_id', $c->id)->orderByDesc('id')->first();
     expect($last($open)->system_key)->toBe('trip_edited');

@@ -14,7 +14,7 @@ it('forgets challenges when the account is deleted', function () {
     $this->postJson('/api/v1/auth/otp/send', ['phone' => '+21620123456', 'locale' => 'fr'])->assertOk();
     $this->withToken($token)->postJson('/api/v1/me/phone/otp/send', ['phone' => '+21655000111', 'locale' => 'fr'])->assertOk();
 
-    $this->withToken($token)->deleteJson('/api/v1/me')->assertNoContent();
+    $this->withToken($token)->postJson('/api/v1/me/delete')->assertNoContent();
 
     expect(OtpChallenge::count())->toBe(0);
 });

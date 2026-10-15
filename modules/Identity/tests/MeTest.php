@@ -42,7 +42,7 @@ it('deletes the account, its tokens, and tells other modules first', function ()
     $user = User::factory()->withPhone('+21620123456')->create();
     $token = tokenFor($user);
 
-    $this->withToken($token)->deleteJson('/api/v1/me')->assertNoContent();
+    $this->withToken($token)->postJson('/api/v1/me/delete')->assertNoContent();
 
     expect(User::count())->toBe(0);
     expect(PersonalAccessToken::count())->toBe(0);

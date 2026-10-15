@@ -15,7 +15,8 @@ Route::get('trips/{id}', [TripsController::class, 'show'])->where('id', $ulid);
 
 Route::middleware('auth:sanctum')->group(function () use ($ulid) {
     Route::post('trips', [TripsController::class, 'store']);
-    Route::patch('trips/{id}', [TripsController::class, 'update'])->where('id', $ulid);
+    // POST twin: the host's firewall bans IPs that send PATCH (see Identity routes).
+    Route::match(['post', 'patch'], 'trips/{id}', [TripsController::class, 'update'])->where('id', $ulid);
     Route::post('trips/{id}/requests', [TripRequestsController::class, 'store'])->where('id', $ulid);
     Route::post('trips/{id}/cancel', [TripRequestsController::class, 'cancelTrip'])->where('id', $ulid);
     Route::post('requests/{id}/scan', [TripRequestsController::class, 'scan'])->where('id', $ulid);

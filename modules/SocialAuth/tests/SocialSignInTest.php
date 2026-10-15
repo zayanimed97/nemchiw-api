@@ -115,7 +115,7 @@ it('lists linked providers on the profile', function () {
 it('forgets identities when the account is deleted', function () {
     $token = socialSignIn(['provider' => 'google', 'token' => googleToken()])->json('token');
     $this->app['auth']->forgetGuards();
-    $this->withToken($token)->deleteJson('/api/v1/me')->assertNoContent();
+    $this->withToken($token)->postJson('/api/v1/me/delete')->assertNoContent();
     $this->app['auth']->forgetGuards();
 
     expect(SocialIdentity::count())->toBe(0);

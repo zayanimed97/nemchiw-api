@@ -69,7 +69,7 @@ it('refuses files over 5 MB', function () {
 
 it('lets the photo route take a big body while other routes keep 64 KB', function () {
     $this->withToken($this->token)->post('/api/v1/me/photo', [], ['Content-Length' => '5000000', 'Accept' => 'application/json'])->assertStatus(422);
-    $this->withToken($this->token)->patchJson('/api/v1/me', [], ['Content-Length' => '5000000'])->assertStatus(413);
+    $this->withToken($this->token)->postJson('/api/v1/me', [], ['Content-Length' => '5000000'])->assertStatus(413);
 });
 
 it('replaces the old photo and resets verification', function () {
@@ -126,7 +126,7 @@ it('deletes the photo with the account', function () {
     $path = Photo::sole()->path;
     $this->app['auth']->forgetGuards();
 
-    $this->withToken($this->token)->deleteJson('/api/v1/me')->assertNoContent();
+    $this->withToken($this->token)->postJson('/api/v1/me/delete')->assertNoContent();
 
     expect(Photo::count())->toBe(0);
     expect(Storage::disk('photos')->exists($path))->toBeFalse();
