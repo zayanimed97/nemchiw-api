@@ -32,6 +32,7 @@ final class PublicProfileResource extends JsonResource
             'joinedAt' => Iso::format($this->created_at),
             'campsCount' => app(CampCounts::class)->for($this->id),
             'age' => $this->birth_date?->age,
+            'gender' => $this->gender,
             'photo' => app(ProfilePhotos::class)->publicView($this->id),
         ];
     }

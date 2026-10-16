@@ -141,3 +141,20 @@ it('throttles sign-in attempts per IP', function () {
     socialSignIn(['provider' => 'google', 'token' => 'bad'])->assertStatus(401);
     socialSignIn(['provider' => 'google', 'token' => 'bad'])->assertStatus(429);
 });
+
+it('confirms a verified provider email on an existing account at the next sign-in', function () {
+    $user = User::factory()->create(['email' => 'typed@x.tn']);
+    (new SocialIdentity)->forceFill(['user_id' => $user->id, 'provider' => 'google', 'provider_user_id' => 'g-9'])->save();
+
+    socialSignIn(['provider' => 'google', 'token' => googleToken('g-9', ['email' => 'Real@Gmail.com', 'email_verified' => true])])->assertOk();
+
+    expect($user->fresh())->email->toBe('typed@x.tn')->confirmed_email->toBe('real@gmail.com');
+});
+
+it('confirms the email of a new provider account, never a hint alone', function () {
+    socialSignIn(['provider' => 'google', 'token' => googleToken('g-1', ['email' => 'real@gmail.com', 'email_verified' => true])])->assertOk();
+    socialSignIn(['provider' => 'apple', 'token' => appleToken(), 'nonce' => 'n-1', 'hint' => ['email' => 'hint@x.tn']])->assertOk();
+
+    expect(User::query()->where('email', 'real@gmail.com')->first()->confirmed_email)->toBe('real@gmail.com')
+        ->and(User::query()->where('email', 'hint@x.tn')->first()->confirmed_email)->toBeNull();
+});

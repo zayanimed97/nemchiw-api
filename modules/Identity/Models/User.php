@@ -24,7 +24,7 @@ final class User extends Authenticatable
 
     /** Nothing private leaves the model by accident (toArray/json). */
     protected $hidden = [
-        'phone', 'phone_verified_at', 'email', 'gender', 'birth_date', 'last_name', 'emergency_contact', 'medical_info',
+        'phone', 'phone_verified_at', 'email', 'confirmed_email', 'gender', 'birth_date', 'last_name', 'emergency_contact', 'medical_info',
     ];
 
     protected function casts(): array

@@ -38,19 +38,49 @@ final class EloquentPeople implements People
         ];
     }
 
-    public function tripReadiness(string $userId): array
+    public function readiness(string $userId): array
     {
         $user = User::query()->findOrFail($userId);
         $verifiedPhoto = $this->photos->publicView($userId) !== null;
-        $ready = filled(trim((string) $user->first_name))
-            && filled(trim((string) $user->last_name))
-            && $user->gender !== null
-            && $user->birth_date !== null && $user->birth_date->age >= self::MIN_TRIP_AGE
-            && $user->phone !== null && $user->phone_verified_at !== null
-            && $user->emergency_contact !== null
-            && $verifiedPhoto;
+        $tooYoung = $user->birth_date !== null && $user->birth_date->age < self::MIN_TRIP_AGE;
 
-        return ['ready' => $ready, 'gender' => $user->gender, 'verifiedPhoto' => $verifiedPhoto];
+        $missing = array_keys(array_filter([
+            'firstName' => blank(trim((string) $user->first_name)),
+            'phone' => $user->phone === null || $user->phone_verified_at === null,
+            'lastName' => blank(trim((string) $user->last_name)),
+            'gender' => $user->gender === null,
+            'birthDate' => $user->birth_date === null,
+            'photo' => ! $verifiedPhoto,
+            'emergencyContact' => $user->emergency_contact === null,
+        ]));
+
+        return [
+            'ready' => $missing === [] && ! $tooYoung,
+            'missing' => $missing,
+            'tooYoung' => $tooYoung,
+            'gender' => $user->gender,
+            'verifiedPhoto' => $verifiedPhoto,
+        ];
+    }
+
+    public function tripReadiness(string $userId): array
+    {
+        $readiness = $this->readiness($userId);
+
+        return [
+            'ready' => $readiness['ready'],
+            'gender' => $readiness['gender'],
+            'verifiedPhoto' => $readiness['verifiedPhoto'],
+        ];
+    }
+
+    public function findByContact(string $normalised): ?string
+    {
+        return User::query()
+            ->where(fn ($q) => $q
+                ->where(fn ($q) => $q->where('phone', $normalised)->whereNotNull('phone_verified_at'))
+                ->orWhere('confirmed_email', $normalised))
+            ->value('id');
     }
 
     public function phone(string $userId): ?string

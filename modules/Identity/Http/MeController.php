@@ -19,7 +19,11 @@ final class MeController
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $user = $this->user($request);
-        $user->fill($request->columns())->save();
+        $user->fill($request->columns());
+        if ($request->changesEmail($user)) {
+            $user->forceFill(['confirmed_email' => null]);
+        }
+        $user->save();
 
         return new JsonResponse(ProfileResource::make($user)->resolve());
     }

@@ -8,6 +8,8 @@ use Modules\Identity\Http\ProfileResource;
 use Modules\Identity\Models\User;
 use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
+use Modules\Shared\Events\ContactConfirmed;
+use Modules\Shared\Support\ContactHash;
 
 final class EloquentAccounts implements Accounts
 {
@@ -21,10 +23,16 @@ final class EloquentAccounts implements Accounts
                 $user = new User;
                 $user->forceFill(['phone' => $phone, 'phone_verified_at' => now()])->save();
                 $isNew = true;
+                $this->contactConfirmed($user->id, $phone);
             } catch (UniqueConstraintViolationException) {
                 // Two verifies for the same new phone raced; the other one created it.
                 $user = User::query()->where('phone', $phone)->firstOrFail();
             }
+        }
+
+        if (! $isNew && $user->phone_verified_at === null) {
+            $user->forceFill(['phone_verified_at' => now()])->save();
+            $this->contactConfirmed($user->id, $phone);
         }
 
         return $this->respond($user, $isNew);
@@ -66,8 +74,31 @@ final class EloquentAccounts implements Accounts
         } catch (UniqueConstraintViolationException) {
             throw new ApiException(ApiErrorCode::PhoneTaken, 'Phone in use');
         }
+        $this->contactConfirmed($userId, $phone);
 
         return ProfileResource::make($user)->resolve();
+    }
+
+    public function confirmEmail(string $userId, string $email): void
+    {
+        $email = mb_strtolower(trim($email));
+        $user = User::query()->findOrFail($userId);
+
+        if (User::query()->where('confirmed_email', $email)->whereKeyNot($userId)->exists()) {
+            return;
+        }
+
+        try {
+            $user->forceFill(['confirmed_email' => $email, 'email' => $user->email ?: $email])->save();
+        } catch (UniqueConstraintViolationException) {
+            return; // another account confirmed it in between
+        }
+        $this->contactConfirmed($userId, $email);
+    }
+
+    private function contactConfirmed(string $userId, string $normalised): void
+    {
+        event(new ContactConfirmed($userId, ContactHash::of($normalised)));
     }
 
     /** @return array{token: string, profile: array<string, mixed>, isNew: bool} */

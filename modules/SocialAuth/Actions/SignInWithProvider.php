@@ -27,10 +27,12 @@ final class SignInWithProvider
         $identity = $this->verifier($provider)->verify($token, $nonce);
 
         $existing = $this->owner($identity);
+        if ($existing === null) {
+            return $this->firstSignIn($identity, $hint);
+        }
+        $this->confirmProviderEmail($existing, $identity);
 
-        return $existing !== null
-            ? $this->accounts->authResponse($existing, false)
-            : $this->firstSignIn($identity, $hint);
+        return $this->accounts->authResponse($existing, false);
     }
 
     /**
@@ -63,7 +65,18 @@ final class SignInWithProvider
             return $this->accounts->authResponse($winner, false);
         }
 
+        $this->confirmProviderEmail($userId, $identity);
+
         return $this->accounts->authResponse($userId, true);
+    }
+
+    /** Only the provider-verified email counts; a hint alone confirms nothing. */
+    private function confirmProviderEmail(string $userId, ProviderIdentity $identity): void
+    {
+        $email = self::email($identity->email);
+        if ($email !== null) {
+            $this->accounts->confirmEmail($userId, $email);
+        }
     }
 
     private function owner(ProviderIdentity $identity): ?string

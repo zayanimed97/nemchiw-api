@@ -47,4 +47,10 @@ interface Accounts
      * @throws ApiException phone_taken
      */
     public function attachPhone(string $userId, string $phone): array;
+
+    /**
+     * Records an email a provider vouches for: sets `email` if empty and `confirmed_email`.
+     * Does nothing if another account already holds it. Raises ContactConfirmed.
+     */
+    public function confirmEmail(string $userId, string $email): void;
 }

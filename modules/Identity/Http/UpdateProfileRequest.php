@@ -4,6 +4,7 @@ namespace Modules\Identity\Http;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Identity\Models\User;
 use Modules\Identity\Profile\ProfileOptions as O;
 use Modules\Shared\Support\Governorates;
 use Modules\Shared\Support\TunisianPhone;
@@ -34,6 +35,17 @@ final class UpdateProfileRequest extends FormRequest
             'medicalInfo' => ['sometimes', 'nullable', 'array:note'],
             'medicalInfo.note' => ['present_with:medicalInfo', 'nullable', 'string', 'max:'.O::MEDICAL_MAX],
         ];
+    }
+
+    /** True when the request sets an email other than the one a provider confirmed. */
+    public function changesEmail(User $user): bool
+    {
+        if (! array_key_exists('email', $this->validated())) {
+            return false;
+        }
+        $email = $this->validated('email');
+
+        return $user->confirmed_email !== null && ($email === null || mb_strtolower($email) !== $user->confirmed_email);
     }
 
     /**
