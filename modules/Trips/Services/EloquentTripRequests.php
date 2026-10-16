@@ -50,6 +50,9 @@ final class EloquentTripRequests implements TripRequests
             'endsAt' => Iso::format($trip->ends_at),
             'meetupAt' => Iso::format($trip->meetup_at),
             'status' => $trip->status,
+            'seats' => $trip->seats,
+            'joined' => $trip->joinedCount(),
+            'womenOnly' => $trip->women_only,
         ];
     }
 

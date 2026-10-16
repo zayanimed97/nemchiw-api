@@ -13,7 +13,10 @@ interface TripRequests
      */
     public function context(array $requestIds): array;
 
-    /** @return array{tripId: string, title: string, kind: string, organiserId: string, startsAt: string, endsAt: string, meetupAt: string, status: string}|null */
+    /** `joined` is the people holding a seat now; free seats = seats - joined.
+     *
+     * @return array{tripId: string, title: string, kind: string, organiserId: string, startsAt: string, endsAt: string, meetupAt: string, status: string, seats: int, joined: int, womenOnly: bool}|null
+     */
     public function trip(string $tripId): ?array;
 
     /**

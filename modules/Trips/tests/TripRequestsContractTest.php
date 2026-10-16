@@ -19,7 +19,7 @@ it('describes requests and their trips for other modules', function () {
         'requestStatus' => 'accepted', 'leaderId' => $request->leader_id, 'organiserId' => $trip->organiser_id,
         'startsAt' => '2026-10-16T16:00:00.000Z',
     ]);
-    expect(app(TripRequests::class)->trip($trip->id))->toMatchArray(['title' => 'Cork oaks', 'organiserId' => $trip->organiser_id]);
+    expect(app(TripRequests::class)->trip($trip->id))->toMatchArray(['title' => 'Cork oaks', 'organiserId' => $trip->organiser_id, 'seats' => 8, 'joined' => 1, 'womenOnly' => false]);
     expect(app(TripRequests::class)->requestsOfTrip($trip->id, ['joined']))
         ->toBe([['requestId' => $joined->id, 'leaderId' => $joined->leader_id, 'status' => 'joined']]);
 });

@@ -10,6 +10,7 @@ $ulid = '[0-9A-Za-z]{26}'; // Laravel stores ULIDs lowercase
 Route::middleware('auth:sanctum')->group(function () use ($ulid) {
     Route::get('me/party', [PartiesController::class, 'mine']);
     Route::post('parties', [PartiesController::class, 'store']);
+    Route::get('parties/{id}/readiness', [PartiesController::class, 'readiness'])->where('id', $ulid);
     Route::post('parties/{id}/lookup', [PartiesController::class, 'lookup'])->where('id', $ulid);
     Route::post('parties/{id}/invites', [PartyMembersController::class, 'invite'])->where('id', $ulid);
     Route::post('parties/{id}/accept', [PartyMembersController::class, 'accept'])->where('id', $ulid);
