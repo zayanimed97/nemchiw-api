@@ -13,7 +13,7 @@ final class TripRequest extends Model
 
     protected $dateFormat = 'Y-m-d H:i:s.v';
 
-    protected $fillable = ['trip_id', 'leader_id', 'note', 'status', 'accepted_at', 'joined_at', 'ended_at', 'ended_by', 'withdrawn_from'];
+    protected $fillable = ['trip_id', 'leader_id', 'note', 'status', 'accepted_at', 'joined_at', 'ended_at', 'ended_by', 'withdrawn_from', 'party_id'];
 
     protected $hidden = ['code_secret'];
 

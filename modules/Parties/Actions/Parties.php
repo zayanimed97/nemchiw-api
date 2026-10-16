@@ -8,6 +8,7 @@ use Modules\Parties\Models\PartyMember;
 use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
 use Modules\Shared\Events\PartyChanged;
+use Modules\Trips\Contracts\TripRequests;
 
 /** Locks and lookups every party action shares. Call inside DB::transaction. */
 final class Parties
@@ -58,5 +59,45 @@ final class Parties
     {
         $party->touchActivity();
         event(new PartyChanged($party->id, $party->request_id, $change, $userId, $byId, $party->leader_id, $party->memberIds()));
+    }
+
+    /**
+     * The party is over: its open request is withdrawn and the placeholders are forgotten.
+     * Call inside DB::transaction with the party row locked.
+     */
+    public static function finish(Party $party, string $change, ?string $userId, ?string $byId): void
+    {
+        if ($party->request_id !== null) {
+            app(TripRequests::class)->withdrawForParty($party->request_id);
+        }
+        $party->forceFill(['state' => Party::OVER])->save();
+        PartyMember::query()->where('party_id', $party->id)->whereNull('user_id')->delete();
+        self::changed($party, $change, $userId, $byId);
+    }
+
+    /** Does this party have a trip request that members must follow (asking or going)? */
+    public static function hasOpenRequest(Party $party): bool
+    {
+        return $party->request_id !== null && in_array($party->state, [Party::ASKING, Party::GOING], true);
+    }
+
+    /**
+     * A member row the leader acts on (party locked, caller already person-locked). Not the
+     * leader: 403. No such row in one of `$states`: 404.
+     *
+     * @param  list<string>  $states
+     */
+    public static function leaderRow(Party $party, string $callerId, string $memberId, array $states): PartyMember
+    {
+        if ($party->leader_id !== $callerId) {
+            throw new ApiException(ApiErrorCode::NotLeader, 'Only the leader can do this');
+        }
+        $row = PartyMember::query()->where('party_id', $party->id)->whereKey(strtolower($memberId))
+            ->whereIn('state', $states)->lockForUpdate()->first();
+        if ($row === null) {
+            throw new ApiException(ApiErrorCode::NotFound, 'Not found');
+        }
+
+        return $row;
     }
 }

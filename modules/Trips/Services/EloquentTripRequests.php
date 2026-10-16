@@ -3,12 +3,17 @@
 namespace Modules\Trips\Services;
 
 use Modules\Shared\Support\Iso;
+use Modules\Trips\Actions\RequestTransitions;
 use Modules\Trips\Contracts\TripRequests;
 use Modules\Trips\Models\Trip;
 use Modules\Trips\Models\TripRequest;
+use Modules\Trips\Models\TripRequestMember;
+use Modules\Trips\Support\RequestStatus;
 
 final class EloquentTripRequests implements TripRequests
 {
+    public function __construct(private readonly RequestTransitions $transitions) {}
+
     public function context(array $requestIds): array
     {
         if ($requestIds === []) {
@@ -54,5 +59,29 @@ final class EloquentTripRequests implements TripRequests
             ->map(fn (TripRequest $r) => ['requestId' => $r->id, 'leaderId' => $r->leader_id, 'status' => $r->status])
             ->values()
             ->all();
+    }
+
+    public function openRequestFor(string $tripId, string $userId): ?string
+    {
+        $id = TripRequest::query()->where('trip_id', $tripId)->whereIn('status', RequestStatus::OPEN)
+            ->whereIn('id', TripRequestMember::query()->where('user_id', $userId)->select('request_id'))
+            ->orderBy('id')->value('id');
+
+        return $id === null ? null : (string) $id;
+    }
+
+    public function removePartyMember(string $requestId, string $userId, string $by): void
+    {
+        $this->transitions->removeMember($requestId, $userId, $by);
+    }
+
+    public function changeLeader(string $requestId, string $leaderId): void
+    {
+        $this->transitions->changeLeader($requestId, $leaderId);
+    }
+
+    public function withdrawForParty(string $requestId): void
+    {
+        $this->transitions->withdrawForParty($requestId);
     }
 }

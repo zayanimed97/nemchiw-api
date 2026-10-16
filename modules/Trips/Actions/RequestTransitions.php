@@ -90,6 +90,61 @@ final class RequestTransitions
         });
     }
 
+    /** The party ended: an open request is withdrawn (the camper side), whatever it was. */
+    public function withdrawForParty(string $requestId): void
+    {
+        $this->lockedRequest($requestId, function (TripRequest $request) {
+            $request->forceFill(['withdrawn_from' => $request->status])->save();
+            $this->end($request, RequestStatus::WITHDRAWN, 'camper');
+        });
+    }
+
+    /**
+     * A member leaves, or `$by` removes them. Nobody left: the request is withdrawn. A joined
+     * member's seat frees because only joined members hold seats.
+     */
+    public function removeMember(string $requestId, string $userId, string $by): void
+    {
+        $this->lockedRequest($requestId, function (TripRequest $request, Trip $trip) use ($userId, $by) {
+            $removed = TripRequestMember::query()->where('request_id', $request->id)->where('user_id', $userId)->delete();
+            if ($removed === 0) {
+                return;
+            }
+            if (! TripRequestMember::query()->where('request_id', $request->id)->exists()) {
+                $request->forceFill(['withdrawn_from' => $request->status])->save();
+                $this->end($request, RequestStatus::WITHDRAWN, 'camper');
+
+                return;
+            }
+            event(new RequestChanged($request->id, $trip->id, $request->leader_id, $trip->organiser_id, $by === $userId ? 'member_left' : 'member_removed', 'camper', $userId));
+        });
+    }
+
+    public function changeLeader(string $requestId, string $leaderId): void
+    {
+        $this->lockedRequest($requestId, function (TripRequest $request, Trip $trip) use ($leaderId) {
+            $request->forceFill(['leader_id' => $leaderId])->save();
+            event(new RequestChanged($request->id, $trip->id, $leaderId, $trip->organiser_id, 'leader_changed', 'camper', $leaderId));
+        });
+    }
+
+    /** @param Closure(TripRequest, Trip): void $change  runs only on an open request */
+    private function lockedRequest(string $requestId, Closure $change): void
+    {
+        $tripId = TripRequest::query()->whereKey($requestId)->value('trip_id');
+        if ($tripId === null) {
+            return;
+        }
+        DB::transaction(function () use ($requestId, $tripId, $change) {
+            $trip = Trip::query()->lockForUpdate()->findOrFail($tripId);
+            $request = TripRequest::query()->find($requestId);
+            if ($request === null || ! in_array($request->status, RequestStatus::OPEN, true)) {
+                return;
+            }
+            $change($request, $trip);
+        });
+    }
+
     /**
      * Ends a request: status, who, when. The code secret goes with it. `$change` names the
      * event when it differs from the status (a trip cancellation ends requests as declined

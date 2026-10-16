@@ -37,7 +37,7 @@ final class AnswerInvitation
                 if ($current->state !== Party::FORMING) {
                     throw new ApiException(ApiErrorCode::AlreadyInParty, 'Your party is already asking for a trip');
                 }
-                $this->leave->handle($current, $userId);
+                ($this->leave)($current, $userId);
             }
 
             $row->update(['state' => PartyMember::IN, 'answered_at' => now()]);

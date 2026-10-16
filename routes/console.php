@@ -9,3 +9,4 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();
 Schedule::command('backup:database')->dailyAt('03:30')->withoutOverlapping(120);
 Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping(10);
 Schedule::command('model:prune', ['--model' => [Spot::class, Trail::class, Centre::class]])->dailyAt('04:00');
+Schedule::command('parties:end-idle')->dailyAt('03:30')->timezone('Africa/Tunis')->withoutOverlapping(120);
