@@ -30,20 +30,27 @@ enum ApiErrorCode: string
     case ConversationClosed = 'conversation_closed';
     case MessageTooLong = 'message_too_long';
     case PhotoInvalid = 'photo_invalid';
+    case AlreadyInParty = 'already_in_party';
+    case PartyFull = 'party_full';
+    case PartyLocked = 'party_locked';
+    case NotLeader = 'not_leader';
+    case PartyNotReady = 'party_not_ready';
+    case LookupLimited = 'lookup_limited';
 
     public function status(): int
     {
         return match ($this) {
             self::Validation, self::InvalidCode, self::CodeExpired => 422,
-            self::RateLimited => 429,
+            self::RateLimited, self::LookupLimited => 429,
             self::Unauthenticated => 401,
             self::NotFound => 404,
             self::PhoneTaken => 409,
             self::ProviderUnavailable => 503,
             self::Server => 500,
-            self::Forbidden, self::NotCertified, self::WomenOnlyRequired => 403,
+            self::Forbidden, self::NotLeader, self::NotCertified, self::WomenOnlyRequired => 403,
             self::NotTripReady, self::OwnTrip, self::MessageTooLong, self::PhotoInvalid => 422,
-            self::AlreadyRequested, self::TripLocked, self::TripNotOpen, self::TripFull, self::NotAccepted, self::ConversationClosed => 409,
+            self::AlreadyRequested, self::TripLocked, self::TripNotOpen, self::TripFull, self::NotAccepted, self::ConversationClosed,
+            self::AlreadyInParty, self::PartyFull, self::PartyLocked, self::PartyNotReady => 409,
         };
     }
 }

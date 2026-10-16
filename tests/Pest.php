@@ -34,3 +34,4 @@ function tripReady(array $attributes = []): User
 }
 
 require_once __DIR__.'/../modules/Chat/tests/Support.php';
+require_once __DIR__.'/../modules/Parties/tests/Support.php';

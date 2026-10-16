@@ -1,0 +1,19 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Modules\Parties\Http\FriendsController;
+use Modules\Parties\Http\PartiesController;
+use Modules\Parties\Http\PartyMembersController;
+
+$ulid = '[0-9A-Za-z]{26}'; // Laravel stores ULIDs lowercase
+
+Route::middleware('auth:sanctum')->group(function () use ($ulid) {
+    Route::get('me/party', [PartiesController::class, 'mine']);
+    Route::post('parties', [PartiesController::class, 'store']);
+    Route::post('parties/{id}/lookup', [PartiesController::class, 'lookup'])->where('id', $ulid);
+    Route::post('parties/{id}/invites', [PartyMembersController::class, 'invite'])->where('id', $ulid);
+    Route::post('parties/{id}/accept', [PartyMembersController::class, 'accept'])->where('id', $ulid);
+    Route::post('parties/{id}/decline', [PartyMembersController::class, 'decline'])->where('id', $ulid);
+    Route::get('me/friends', [FriendsController::class, 'index']);
+    Route::post('me/friends/{userId}/remove', [FriendsController::class, 'remove'])->where('userId', $ulid);
+});
