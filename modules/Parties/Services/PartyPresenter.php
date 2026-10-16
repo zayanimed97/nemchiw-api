@@ -7,11 +7,12 @@ use Modules\Parties\Actions\Parties;
 use Modules\Parties\Models\Party;
 use Modules\Parties\Models\PartyMember;
 use Modules\Shared\Support\Iso;
+use Modules\Trips\Contracts\TripRequests;
 
 /** Party wire shapes. The leader sees every open row (masked contacts included); members see who is in. */
 final class PartyPresenter
 {
-    public function __construct(private readonly People $people) {}
+    public function __construct(private readonly People $people, private readonly TripRequests $trips) {}
 
     /** @return array<string, mixed> */
     public function forViewer(Party $party, string $viewerId): array
@@ -28,7 +29,7 @@ final class PartyPresenter
             'state' => $party->state,
             'leaderId' => $party->leader_id,
             'leader' => $people[$party->leader_id] ?? null,
-            'request' => null, // filled in when a request is linked (Trips)
+            'request' => $this->request($party),
             'members' => $rows->map(fn (PartyMember $m) => [
                 'id' => $m->id,
                 'userId' => $m->user_id,
@@ -40,6 +41,17 @@ final class PartyPresenter
             ])->all(),
             'createdAt' => Iso::format($party->created_at),
         ];
+    }
+
+    /** @return array{id: string, tripId: string, status: string}|null */
+    private function request(Party $party): ?array
+    {
+        if ($party->request_id === null) {
+            return null;
+        }
+        $context = $this->trips->context([$party->request_id])[$party->request_id] ?? null;
+
+        return $context === null ? null : ['id' => $party->request_id, 'tripId' => $context['tripId'], 'status' => $context['requestStatus']];
     }
 
     /** @return array{party: array<string, mixed>|null, invitations: list<array<string, mixed>>} */

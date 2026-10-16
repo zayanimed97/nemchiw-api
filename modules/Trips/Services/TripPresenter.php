@@ -48,7 +48,7 @@ final class TripPresenter
         ]);
     }
 
-    /** @return array{id: string, status: string, note: ?string, createdAt: string, acceptedAt: ?string, joinedAt: ?string, report: ?array{reason: string, status: string}} */
+    /** @return array{id: string, status: string, note: ?string, createdAt: string, acceptedAt: ?string, joinedAt: ?string, report: ?array{reason: string, status: string}, partyId: ?string, role: 'leader'|'member', members: int} */
     public function myRequest(TripRequest $request, ?string $viewerId = null): array
     {
         return [
@@ -59,6 +59,9 @@ final class TripPresenter
             'acceptedAt' => $request->accepted_at === null ? null : Iso::format($request->accepted_at),
             'joinedAt' => $request->joined_at === null ? null : Iso::format($request->joined_at),
             'report' => $viewerId === null ? null : $this->reportBy($request->id, $viewerId),
+            'partyId' => $request->party_id,
+            'role' => $viewerId === null || $request->leader_id === $viewerId ? 'leader' : 'member',
+            'members' => $request->members()->count(),
         ];
     }
 

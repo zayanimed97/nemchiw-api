@@ -68,6 +68,11 @@ function fakeTripRequests(): object
             $this->calls[] = ['changeLeader', [$requestId, $leaderId]];
         }
 
+        public function partyIdOf(string $requestId): ?string
+        {
+            return null;
+        }
+
         public function withdrawForParty(string $requestId): void
         {
             $this->calls[] = ['withdrawForParty', [$requestId]];

@@ -19,7 +19,10 @@ final class HostedRequests
     {
         $requests = TripRequest::query()->with('members')->where('trip_id', $trip->id)
             ->whereIn('status', RequestStatus::OPEN)->orderBy('created_at')->get();
-        $profiles = $this->people->publicProfiles($requests->pluck('leader_id')->all());
+        $profiles = $this->people->publicProfiles(array_values(array_unique([
+            ...$requests->pluck('leader_id')->all(),
+            ...$requests->filter(fn (TripRequest $r) => $r->party_id !== null)->flatMap(fn (TripRequest $r) => $r->members->pluck('user_id'))->all(),
+        ])));
         $detailsOpen = now()->lessThan($trip->ends_at->copy()->addDays((int) config('trips.details_days')));
 
         return $requests->map(fn (TripRequest $r) => [
@@ -30,6 +33,11 @@ final class HostedRequests
             'acceptedAt' => $r->accepted_at === null ? null : Iso::format($r->accepted_at),
             'joinedAt' => $r->joined_at === null ? null : Iso::format($r->joined_at),
             'leader' => $profiles[$r->leader_id] ?? null,
+            'party' => $r->party_id === null ? null : [
+                'size' => $r->members->count(),
+                'members' => $r->members->map(fn (TripRequestMember $m) => $profiles[$m->user_id] ?? null)->filter()->values()->all(),
+            ],
+            'totalTnd' => $trip->price_tnd > 0 ? $trip->price_tnd * max(1, $r->members->count()) : null,
             'history' => $this->history($r->leader_id),
             'members' => $r->members->map(fn (TripRequestMember $m) => [
                 'userId' => $m->user_id,

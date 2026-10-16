@@ -17,10 +17,14 @@ final class TripRequestsController
 
     public function store(Request $request, string $id): JsonResponse
     {
-        $data = $request->validate(['note' => ['nullable', 'string', 'max:500']]);
+        $data = $request->validate(['note' => ['nullable', 'string', 'max:500'], 'partyId' => ['nullable', 'string', 'regex:/^[0-9A-Za-z]{26}$/']]);
         $userId = $this->userId($request);
         $trip = Trip::query()->findOrFail($id);
-        $this->transitions->ask($trip, $userId, $data['note'] ?? null);
+        if (isset($data['partyId'])) {
+            $this->transitions->askAsParty($trip, $userId, strtolower($data['partyId']), $data['note'] ?? null);
+        } else {
+            $this->transitions->ask($trip, $userId, $data['note'] ?? null);
+        }
 
         return new JsonResponse($this->presenter->detail($trip->fresh(), $userId), 201);
     }

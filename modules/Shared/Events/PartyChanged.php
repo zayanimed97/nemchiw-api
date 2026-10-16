@@ -6,7 +6,8 @@ use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 
 /**
  * A party moved. `change`: invited, accepted, declined, reminded, removed, left,
- * leader_changed, ended, auto_ended. `userId` is the person it is about (null for a
+ * leader_changed, ended, auto_ended, and as the party follows its trip request:
+ * asked, accepted, scanned, request_ended. `userId` is the person it is about (null for a
  * placeholder), `byId` who did it (null for the system). `memberIds` is the leader plus
  * the `in` members after the change. Dispatched after the transaction commits.
  */

@@ -15,7 +15,7 @@ interface TripRequests
 
     /** `joined` is the people holding a seat now; free seats = seats - joined.
      *
-     * @return array{tripId: string, title: string, kind: string, organiserId: string, startsAt: string, endsAt: string, meetupAt: string, status: string, seats: int, joined: int, womenOnly: bool}|null
+     * @return array{tripId: string, title: string, kind: string, organiserId: string, startsAt: string, endsAt: string, meetupAt: string, status: string, seats: int, joined: int, womenOnly: bool, place: string}|null
      */
     public function trip(string $tripId): ?array;
 
@@ -37,6 +37,9 @@ interface TripRequests
 
     /** The party's lead moved to another member. Raises `leader_changed`. */
     public function changeLeader(string $requestId, string $leaderId): void;
+
+    /** The party a request was made for, if any. */
+    public function partyIdOf(string $requestId): ?string;
 
     /** The party ended: an open request is withdrawn. Does nothing to a finished one. */
     public function withdrawForParty(string $requestId): void;

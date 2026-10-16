@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Support\Facades\DB;
 use Modules\Identity\Contracts\People;
 use Modules\Organisers\Contracts\OrganiserRecords;
+use Modules\Parties\Contracts\PartyRoster;
 use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
 use Modules\Shared\Events\RequestChanged;
@@ -54,6 +55,41 @@ final class RequestTransitions
         });
     }
 
+    /**
+     * The leader asks for the whole party. Order of refusals: not the leader, party locked
+     * (inside `forAsk`, which locks person then party), trip closed, someone not ready, no
+     * seats for everyone. The trip row is locked last.
+     */
+    public function askAsParty(Trip $trip, string $leaderId, string $partyId, ?string $note): TripRequest
+    {
+        return DB::transaction(function () use ($trip, $leaderId, $partyId, $note) {
+            $roster = app(PartyRoster::class)->forAsk($partyId, $leaderId, $trip->id); // lazy: Parties depends on Trips
+
+            return $this->locked($trip, function (Trip $trip) use ($roster, $leaderId, $partyId, $note) {
+                $this->assertOpen($trip);
+                $memberIds = $roster['memberIds'];
+                $taken = TripRequestMember::query()->whereIn('user_id', $memberIds)
+                    ->whereIn('request_id', TripRequest::query()->where('trip_id', $trip->id)->whereNotIn('status', RequestStatus::MAY_REQUEST_AGAIN)->select('id'))
+                    ->exists();
+                if ($roster['blockers'] !== [] || $taken || in_array($trip->organiser_id, $memberIds, true)) {
+                    throw new ApiException(ApiErrorCode::PartyNotReady, 'Someone in the party is not ready');
+                }
+                if ($trip->joinedCount() + count($memberIds) > $trip->seats) {
+                    throw new ApiException(ApiErrorCode::TripFull, 'The trip does not have seats for the whole party');
+                }
+                $request = TripRequest::query()->create([
+                    'trip_id' => $trip->id, 'leader_id' => $leaderId, 'note' => $note, 'status' => RequestStatus::PENDING, 'party_id' => $partyId,
+                ]);
+                foreach ($memberIds as $memberId) {
+                    TripRequestMember::query()->create(['request_id' => $request->id, 'user_id' => $memberId]);
+                }
+                event(new RequestChanged($request->id, $trip->id, $leaderId, $trip->organiser_id, 'asked', 'camper', $note));
+
+                return $request;
+            });
+        });
+    }
+
     public function accept(TripRequest $request, string $actorId): TripRequest
     {
         return $this->onRequest($request, $actorId, 'organiser', [RequestStatus::PENDING], function (TripRequest $request, Trip $trip) {
@@ -86,7 +122,7 @@ final class RequestTransitions
     {
         return $this->onRequest($request, $actorId, 'organiser', [RequestStatus::ACCEPTED, RequestStatus::JOINED], function (TripRequest $request, Trip $trip) {
             $this->end($request, RequestStatus::CANCELLED, 'organiser');
-            $this->records->bump($trip->organiser_id, 'cancelled_campers');
+            $this->records->bump($trip->organiser_id, 'cancelled_campers', max(1, $request->members()->count()));
         });
     }
 

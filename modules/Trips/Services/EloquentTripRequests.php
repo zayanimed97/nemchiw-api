@@ -53,6 +53,7 @@ final class EloquentTripRequests implements TripRequests
             'seats' => $trip->seats,
             'joined' => $trip->joinedCount(),
             'womenOnly' => $trip->women_only,
+            'place' => (string) ($trip->destination['name']['en'] ?? collect($trip->destination['name'] ?? [])->first() ?? $trip->title),
         ];
     }
 
@@ -81,6 +82,13 @@ final class EloquentTripRequests implements TripRequests
     public function changeLeader(string $requestId, string $leaderId): void
     {
         $this->transitions->changeLeader($requestId, $leaderId);
+    }
+
+    public function partyIdOf(string $requestId): ?string
+    {
+        $id = TripRequest::query()->whereKey($requestId)->value('party_id');
+
+        return $id === null ? null : (string) $id;
     }
 
     public function withdrawForParty(string $requestId): void

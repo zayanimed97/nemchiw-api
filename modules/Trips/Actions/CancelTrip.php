@@ -33,7 +33,7 @@ final class CancelTrip
                     $this->transitions->end($request, RequestStatus::DECLINED, $by, 'trip_cancelled');
                 } else {
                     $this->transitions->end($request, RequestStatus::CANCELLED, $by, 'trip_cancelled');
-                    $cancelledCampers++;
+                    $cancelledCampers += max(1, $request->members()->count());
                 }
             }
             $wasPublished = $trip->status === TripStatus::PUBLISHED;
