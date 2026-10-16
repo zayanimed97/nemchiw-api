@@ -131,3 +131,9 @@ Before relying on a package's API, confirm its installed version:
 - After the feature tests pass, ask the user to run the complete suite with `php artisan test --compact`.
 
 </laravel-boost-guidelines>
+
+## Modules
+
+- `modules/Parties`: parties (groups that join one trip together), invitations and their
+  placeholders (keyed by `PARTIES_CONTACT_KEY`), friends (`me/friends`), and the daily
+  `parties:end-idle` command. Config in `modules/Parties/config.php`.

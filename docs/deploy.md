@@ -47,6 +47,7 @@ Shared hosting, SSH on port 65002. The app lives **outside** `public_html`; only
    DIDIT_API_KEY=…              # sandbox key first, then the live one
    DIDIT_WORKFLOW_ID=…          # the Biometric Authentication workflow
    DIDIT_WEBHOOK_SECRET=…
+   PARTIES_CONTACT_KEY=…        # required: generate once with `php -r 'echo bin2hex(random_bytes(32));'`, never rotate
    ```
    In the Didit console, set the webhook URL to `https://api.lunara-tn.com/api/v1/webhooks/didit`
    (session status updates). Account deletion erases sessions at Didit through the queue, so the
@@ -160,3 +161,18 @@ php artisan migrate --force && php artisan optimize
   first: check that a chat message answers fast even with Ably's key wrong.
 - The day-before reminder rides on the hourly `trips:tick`: the cron must be running.
 - Check: `curl -s -H 'Accept: application/json' https://api.lunara-tn.com/api/v1/me/conversations` → 401.
+
+## Slice 3.4: friends and parties
+
+```bash
+php artisan migrate --force && php artisan optimize
+```
+
+- Set `PARTIES_CONTACT_KEY` in `.env` before the first deploy of this slice: the parties code throws
+  without it. Generate it once with `php -r 'echo bin2hex(random_bytes(32));'` and never rotate it;
+  a new key orphans the placeholder hashes already stored for invitees.
+- New migrations: `users.confirmed_email`, the `parties` tables, `trips.party_id`, and
+  `conversation_readers` (chat).
+- The daily command `parties:end-idle` runs at 03:30 Africa/Tunis (registered in `routes/console.php`).
+  Check that `php artisan schedule:list` shows it, and that the every-minute cron is running.
+- Check: `curl -s -H 'Accept: application/json' https://api.lunara-tn.com/api/v1/me/party` → 401.
