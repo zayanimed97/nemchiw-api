@@ -19,6 +19,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "laravel/boost": "^2.10",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.0.6",
         "laravel/pint": "^1.27",
@@ -53,6 +54,10 @@
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"
+        ],
+        "dev:lan": [
+            "Composer\\Config::disableProcessTimeout",
+            "./scripts/dev-lan.sh"
         ],
         "test": [
             "@php artisan config:clear --ansi @no_additional_args",
