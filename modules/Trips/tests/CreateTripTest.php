@@ -63,7 +63,18 @@ it('lets any trip-ready person host a free community hike', function () {
 
     $this->withToken(tokenFor($user))->postJson('/api/v1/trips', campingPayload([
         'kind' => 'hike_community', 'destination' => ['kind' => 'trail', 'id' => 'water-temple'], 'priceTnd' => null,
+        'endsAt' => '2026-10-16T20:00:00.000Z',
     ]))->assertCreated()->assertJsonPath('priceTnd', null);
+});
+
+it('keeps a hike on one day in Tunis', function () {
+    $hike = ['kind' => 'hike_pro', 'destination' => ['kind' => 'trail', 'id' => 'water-temple']];
+
+    // 16 Oct 17:00 → 16 Oct 23:30 Tunis is one day; 17 Oct 00:30 Tunis is the next.
+    $this->withToken(tokenFor(certified()))->postJson('/api/v1/trips', campingPayload($hike + ['endsAt' => '2026-10-16T22:30:00.000Z']))
+        ->assertCreated();
+    $this->withToken(tokenFor(certified()))->postJson('/api/v1/trips', campingPayload($hike + ['endsAt' => '2026-10-16T23:30:00.000Z']))
+        ->assertStatus(422)->assertJsonPath('code', 'validation');
 });
 
 it('refuses a price on a community hike and requires one on certified kinds', function () {
@@ -106,7 +117,7 @@ it('holds a trip to the host\'s own pending place as a draft', function () {
     Spot::factory()->create(['id' => 'my-cove', 'status' => 'pending', 'created_by' => $host->id]);
 
     $this->withToken(tokenFor($host))->postJson('/api/v1/trips', campingPayload([
-        'kind' => 'hike_community', 'priceTnd' => null, 'destination' => ['kind' => 'spot', 'id' => 'my-cove'],
+        'kind' => 'hike_community', 'priceTnd' => null, 'endsAt' => '2026-10-16T20:00:00.000Z', 'destination' => ['kind' => 'spot', 'id' => 'my-cove'],
     ]))->assertCreated()->assertJsonPath('status', 'draft');
 });
 

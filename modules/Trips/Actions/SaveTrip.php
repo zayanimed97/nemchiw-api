@@ -101,7 +101,8 @@ final class SaveTrip
 
     /**
      * @param  array<string, mixed>  $data
-     * @param  list<string>|null  $changed  keys sent on PATCH; null on create. An unchanged start may be in the past.
+     * @param  list<string>|null  $changed  keys sent on PATCH; null on create. An unchanged start may be in the past,
+     *                                      and an older multi-day hike keeps its dates until they change.
      */
     private function checkRules(array $data, ?array $changed = null): void
     {
@@ -113,6 +114,11 @@ final class SaveTrip
         }
         if (CarbonImmutable::parse($data['endsAt'])->lessThanOrEqualTo($starts)) {
             $errors['endsAt'] = 'The trip must end after it starts';
+        }
+        $dated = $changed === null || array_intersect(['kind', 'startsAt', 'endsAt'], $changed) !== [];
+        $tunis = fn (string $iso) => CarbonImmutable::parse($iso)->setTimezone('Africa/Tunis')->toDateString();
+        if ($dated && $data['kind'] !== TripKind::CAMPING && $tunis($data['startsAt']) !== $tunis($data['endsAt'])) {
+            $errors['endsAt'] = 'A hike ends on the day it starts';
         }
         if (CarbonImmutable::parse($data['meetupAt'])->greaterThan($starts)) {
             $errors['meetupAt'] = 'Meet before the trip starts';

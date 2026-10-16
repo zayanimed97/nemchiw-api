@@ -8,10 +8,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Modules\Identity\Events\AccountDeleting;
+use Modules\Media\Contracts\Photos;
 use Modules\Shared\Providers\ModuleServiceProvider;
 use Modules\Verification\Actions\PruneWebhookEvents;
 use Modules\Verification\Contracts\IdentityVerifier;
 use Modules\Verification\Didit\DiditVerifier;
+use Modules\Verification\Fake\FakeVerifier;
 use Modules\Verification\Listeners\EraseSessions;
 
 class VerificationServiceProvider extends ModuleServiceProvider
@@ -24,7 +26,15 @@ class VerificationServiceProvider extends ModuleServiceProvider
     public function register(): void
     {
         parent::register();
-        $this->app->bind(IdentityVerifier::class, fn () => new DiditVerifier((array) config('verification.didit')));
+        $this->app->bind(IdentityVerifier::class, function ($app) {
+            $didit = (array) config('verification.didit');
+            // Local development without a Didit key decides at once (see FakeVerifier).
+            if ($app->environment('local') && ($didit['api_key'] ?? '') === '') {
+                return new FakeVerifier($app->make(Photos::class), (string) config('verification.fake_outcome'));
+            }
+
+            return new DiditVerifier($didit);
+        });
     }
 
     public function boot(): void

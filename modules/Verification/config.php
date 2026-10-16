@@ -7,6 +7,8 @@ return [
         'workflow_id' => (string) env('DIDIT_WORKFLOW_ID', ''),
         'webhook_secret' => (string) env('DIDIT_WEBHOOK_SECRET', ''),
     ],
+    // APP_ENV=local without a Didit key: every check ends with this (verified or rejected).
+    'fake_outcome' => (string) env('VERIFICATION_FAKE_OUTCOME', 'verified'),
     // Each check costs money: at most this many sessions per person per 24 h.
     'sessions_per_day' => 5,
     // Circuit breaker for the whole service (cost cap if accounts are mass-created).
