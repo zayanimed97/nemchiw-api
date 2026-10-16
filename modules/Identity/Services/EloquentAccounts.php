@@ -10,6 +10,7 @@ use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
 use Modules\Shared\Events\ContactConfirmed;
 use Modules\Shared\Support\ContactHash;
+use Throwable;
 
 final class EloquentAccounts implements Accounts
 {
@@ -98,7 +99,12 @@ final class EloquentAccounts implements Accounts
 
     private function contactConfirmed(string $userId, string $normalised): void
     {
-        event(new ContactConfirmed($userId, ContactHash::of($normalised)));
+        // A side effect must never fail a sign-in whose account row is already written.
+        try {
+            event(new ContactConfirmed($userId, ContactHash::of($normalised)));
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     /** @return array{token: string, profile: array<string, mixed>, isNew: bool} */

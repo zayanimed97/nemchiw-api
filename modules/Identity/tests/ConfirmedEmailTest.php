@@ -72,3 +72,17 @@ it('throws a clear error when the contact key is missing', function () {
     config(['parties.contact_key' => '']);
     ContactHash::of('+21698765432');
 })->throws(RuntimeException::class, 'contact_key');
+
+it('never fails a sign-in when the contact key is missing', function () {
+    Event::fake([ContactConfirmed::class]);
+    config(['parties.contact_key' => '']);
+    $this->withoutExceptionHandling();
+
+    $result = app(Accounts::class)->signInWithPhone('+21698765432');
+    $user = User::factory()->create();
+    app(Accounts::class)->confirmEmail($user->id, 'a@x.tn');
+
+    expect($result['token'])->not->toBeEmpty()
+        ->and($user->fresh()->confirmed_email)->toBe('a@x.tn');
+    Event::assertNotDispatched(ContactConfirmed::class);
+});
