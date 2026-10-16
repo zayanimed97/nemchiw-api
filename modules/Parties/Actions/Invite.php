@@ -12,11 +12,15 @@ use Modules\Shared\Support\ContactHash;
 
 final class Invite
 {
-    public function __construct(private readonly People $people) {}
+    public function __construct(private readonly People $people, private readonly LookupLimiter $limiter) {}
 
     /** Invite a person by id, or by phone or email (a placeholder when nobody has that contact yet). */
     public function handle(string $partyId, string $callerId, ?string $userId, ?string $contact): Party
     {
+        if ($userId === null) {
+            $this->limiter->hit($callerId); // asking about a contact is a lookup
+        }
+
         return DB::transaction(function () use ($partyId, $callerId, $userId, $contact) {
             $party = Parties::lockedOrFail($partyId);
             if ($party->leader_id !== $callerId) {

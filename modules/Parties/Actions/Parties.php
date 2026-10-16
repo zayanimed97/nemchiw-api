@@ -37,6 +37,13 @@ final class Parties
         return $query->first();
     }
 
+    /** Still leading this party, or an `in` member of it. */
+    public static function isIn(Party $party, string $userId): bool
+    {
+        return $party->leader_id === $userId
+            || PartyMember::query()->where('party_id', $party->id)->where('user_id', $userId)->where('state', PartyMember::IN)->exists();
+    }
+
     public static function lockedOrFail(string $partyId): Party
     {
         $party = Party::query()->whereKey(strtolower($partyId))->lockForUpdate()->first();

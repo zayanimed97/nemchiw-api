@@ -118,3 +118,22 @@ it('lists invitations with who has joined, by first name and photo, and hides th
         ->and($invite['invitedCount'])->toBe(2);
     expect($res->getContent())->not->toContain('Amine');
 });
+
+it('lets two members in each other\'s invited party accept crosswise', function () {
+    $leaderA = User::factory()->create();
+    $leaderB = User::factory()->create();
+    $amine = User::factory()->create();
+    $nour = User::factory()->create();
+    $a = makeParty($this, $leaderA);
+    $b = makeParty($this, $leaderB);
+    joinParty($this, $a, $amine);
+    joinParty($this, $b, $nour);
+    partyAs($this, $leaderB)->postJson("/api/v1/parties/{$b->id}/invites", ['userId' => $amine->id]);
+    partyAs($this, $leaderA)->postJson("/api/v1/parties/{$a->id}/invites", ['userId' => $nour->id]);
+
+    partyAs($this, $amine)->postJson("/api/v1/parties/{$b->id}/accept")->assertOk();
+    partyAs($this, $nour)->postJson("/api/v1/parties/{$a->id}/accept")->assertOk();
+
+    expect(memberRow($b, $amine))->state->toBe('in');
+    expect(memberRow($a, $nour))->state->toBe('in');
+});

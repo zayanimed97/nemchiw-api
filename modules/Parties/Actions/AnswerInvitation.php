@@ -16,8 +16,18 @@ final class AnswerInvitation
     {
         DB::transaction(function () use ($partyId, $userId) {
             Parties::lockPerson($userId);
-            $current = Parties::openFor($userId);
-            $party = Parties::lockedOrFail($partyId);
+            // Both parties in id order, so two crosswise accepts queue instead of deadlocking.
+            $currentId = Parties::openFor($userId, lock: false)?->id;
+            $locked = Party::query()->whereIn('id', array_filter([$currentId, strtolower($partyId)]))
+                ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+            $current = $currentId === null ? null : $locked->get($currentId);
+            if ($current !== null && ($current->state === Party::OVER || ! Parties::isIn($current, $userId))) {
+                $current = null;
+            }
+            $party = $locked->get(strtolower($partyId));
+            if ($party === null || $party->state === Party::OVER) {
+                throw new ApiException(ApiErrorCode::NotFound, 'Not found');
+            }
             $row = $this->invitation($party, $userId);
 
             if ($party->state !== Party::FORMING) {
@@ -33,7 +43,7 @@ final class AnswerInvitation
             $row->update(['state' => PartyMember::IN, 'answered_at' => now()]);
             $this->friends->add($party->leader_id, $userId, ['kind' => 'party']);
             Parties::changed($party, 'accepted', $userId, $userId);
-        });
+        }, 3);
     }
 
     public function decline(string $partyId, string $userId): void

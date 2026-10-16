@@ -58,3 +58,16 @@ it('rate-limits lookups', function () {
     partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/lookup", ['contact' => '22345678'])
         ->assertStatus(429)->assertJsonPath('code', 'lookup_limited')->assertJsonStructure(['retryAfter']);
 });
+
+it('counts invites by contact as lookups', function () {
+    $leader = User::factory()->create();
+    $party = makeParty($this, $leader);
+
+    foreach (range(1, 20) as $i) {
+        partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/invites", ['contact' => '98765432'])->assertOk();
+    }
+
+    partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/invites", ['contact' => '98765432'])
+        ->assertStatus(429)->assertJsonPath('code', 'lookup_limited');
+    partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/lookup", ['contact' => '98765432'])->assertStatus(429);
+});
