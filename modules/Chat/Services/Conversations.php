@@ -59,13 +59,13 @@ final class Conversations
             }
             $name = $this->people->publicProfiles([$senderId])[$senderId]['firstName'] ?? null;
             event(new MessagePosted(
-                $message->id, $conversation->id, $senderId, $conversation->otherThan($senderId),
+                $message->id, $conversation->id, $senderId, array_values(array_filter($conversation->participantIds(), fn ($id) => $id !== $senderId)),
                 $message->kind, $message->body, $conversation->trip_title, $name,
             ));
 
             return $message;
         });
-        $this->broadcast($message);
+        $this->broadcast($conversation, $message);
 
         return [$message, true];
     }
@@ -81,7 +81,7 @@ final class Conversations
             'system_params' => $params,
         ]);
         $this->touch($conversation, $message);
-        $this->broadcast($message);
+        $this->broadcast($conversation, $message);
 
         return $message;
     }
@@ -92,9 +92,9 @@ final class Conversations
     }
 
     /** After the response: a slow or failing Ably never holds up or fails the request. */
-    private function broadcast(Message $message): void
+    private function broadcast(Conversation $conversation, Message $message): void
     {
-        $payload = $this->presenter->message($message);
+        $payload = $this->presenter->messageIn($conversation, $message);
         defer(function () use ($payload) {
             try {
                 $this->realtime->publish("private-conversation.{$payload['conversationId']}", 'message.created', $payload);

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Modules\Chat\Contracts\ConversationDirectory;
 use Modules\Chat\Listeners\CloseFinishedTrip;
+use Modules\Chat\Listeners\FollowParty;
 use Modules\Chat\Listeners\FollowRequest;
 use Modules\Chat\Listeners\ForgetSender;
 use Modules\Chat\Listeners\NoteTripEdit;
@@ -53,6 +54,7 @@ class ChatServiceProvider extends ModuleServiceProvider
         // Order matters: the conversation exists before the system line and before Push reads it.
         Event::listen(RequestChanged::class, OpenConversation::class);
         Event::listen(RequestChanged::class, FollowRequest::class);
+        Event::listen(RequestChanged::class, FollowParty::class); // after the line: it needs the old leader
         Event::listen(TripEdited::class, NoteTripEdit::class);
         Event::listen(TripFinished::class, CloseFinishedTrip::class);
         Event::listen(AccountDeleting::class, ForgetSender::class);

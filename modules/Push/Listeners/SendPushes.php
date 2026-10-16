@@ -27,22 +27,26 @@ final class SendPushes
 
     public function message(MessagePosted $event): void
     {
-        if ($event->recipientId === null || $this->conversations->isViewing($event->conversationId, $event->recipientId)) {
-            return;
+        $notices = [];
+        foreach ($event->recipientIds as $recipientId) {
+            if ($this->conversations->isViewing($event->conversationId, $recipientId)) {
+                continue;
+            }
+            $notices[] = new Notice(
+                $recipientId,
+                'message_title',
+                ['name' => $event->senderName ?? '', 'trip' => $event->tripTitle],
+                body: match ($event->kind) {
+                    'photo' => 'photo',
+                    'location' => 'location',
+                    default => null,
+                },
+                rawBody: $event->kind === 'text' ? $event->body : null,
+                data: ['type' => 'message', 'conversationId' => $event->conversationId],
+                thread: $event->conversationId,
+            );
         }
-        $this->sender->send([new Notice(
-            $event->recipientId,
-            'message_title',
-            ['name' => $event->senderName ?? '', 'trip' => $event->tripTitle],
-            body: match ($event->kind) {
-                'photo' => 'photo',
-                'location' => 'location',
-                default => null,
-            },
-            rawBody: $event->kind === 'text' ? $event->body : null,
-            data: ['type' => 'message', 'conversationId' => $event->conversationId],
-            thread: $event->conversationId,
-        )]);
+        $this->sender->send($notices);
     }
 
     public function requestChanged(RequestChanged $event): void

@@ -3,6 +3,7 @@
 namespace Modules\Chat\Listeners;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Chat\Models\Conversation;
 use Modules\Chat\Services\Conversations;
@@ -37,6 +38,11 @@ final class OpenConversation
             'trip_kind' => $trip['kind'],
             'trip_starts_at' => CarbonImmutable::parse($trip['startsAt']),
         ]);
+        $memberIds = $this->requests->context([$event->requestId])[$event->requestId]['memberIds'] ?? [];
+        $readers = array_values(array_diff($memberIds, [$event->leaderId, $event->organiserId]));
+        if ($readers !== []) {
+            DB::table('conversation_readers')->insert(array_map(fn (string $id) => ['conversation_id' => $conversation->id, 'user_id' => $id], $readers));
+        }
         $name = $this->people->publicProfiles([$event->leaderId])[$event->leaderId]['firstName'] ?? '';
         $this->conversations->system($conversation, 'asked', ['name' => (string) $name], $event->leaderId);
         if ($event->note !== null && trim($event->note) !== '') {

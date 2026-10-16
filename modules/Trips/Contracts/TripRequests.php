@@ -9,7 +9,7 @@ interface TripRequests
      * Unknown ids are left out.
      *
      * @param  list<string>  $requestIds
-     * @return array<string, array{requestId: string, tripId: string, tripTitle: string, tripKind: string, startsAt: string, endsAt: string, meetupAt: string, tripStatus: string, requestStatus: string, leaderId: string, organiserId: string}>
+     * @return array<string, array{requestId: string, tripId: string, tripTitle: string, tripKind: string, startsAt: string, endsAt: string, meetupAt: string, tripStatus: string, requestStatus: string, leaderId: string, organiserId: string, memberIds: list<string>, partyId: ?string}>
      */
     public function context(array $requestIds): array;
 

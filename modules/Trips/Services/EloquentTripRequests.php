@@ -20,6 +20,9 @@ final class EloquentTripRequests implements TripRequests
             return [];
         }
 
+        $members = TripRequestMember::query()->whereIn('request_id', $requestIds)->orderBy('user_id')->get(['request_id', 'user_id'])
+            ->groupBy('request_id')->map(fn ($rows) => $rows->pluck('user_id')->map(fn ($id) => (string) $id)->values()->all());
+
         return TripRequest::query()->with('trip')->whereIn('id', $requestIds)->get()
             ->mapWithKeys(fn (TripRequest $r) => [$r->id => [
                 'requestId' => $r->id,
@@ -33,6 +36,8 @@ final class EloquentTripRequests implements TripRequests
                 'requestStatus' => $r->status,
                 'leaderId' => $r->leader_id,
                 'organiserId' => $r->trip->organiser_id,
+                'memberIds' => $members[$r->id] ?? [],
+                'partyId' => $r->party_id === null ? null : (string) $r->party_id,
             ]])
             ->all();
     }

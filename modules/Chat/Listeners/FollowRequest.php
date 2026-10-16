@@ -21,6 +21,11 @@ final class FollowRequest
         if ($conversation === null) {
             return; // a request from before 3.3
         }
+        if (in_array($event->change, ['member_left', 'member_removed', 'leader_changed'], true)) {
+            $this->partyLine($conversation, $event);
+
+            return;
+        }
         $actorId = match ($event->by) {
             'camper' => $event->leaderId,
             'organiser' => $event->organiserId,
@@ -34,5 +39,26 @@ final class FollowRequest
             $conversation->forceFill(['closes_at' => now()])->save();
         }
         $this->conversations->system($conversation, $event->change, $params, $actorId);
+    }
+
+    /** Party changes name the people involved (`note`), not `by`. Runs before FollowParty moves camper_id. */
+    private function partyLine(Conversation $conversation, RequestChanged $event): void
+    {
+        if ($event->change === 'leader_changed') {
+            $ids = array_values(array_filter([$conversation->camper_id, $event->leaderId]));
+            $names = $this->people->publicProfiles($ids);
+            $name = fn (?string $id) => (string) ($names[$id ?? '']['firstName'] ?? '');
+            $this->conversations->system($conversation, 'party_leader_changed', ['from' => $name($conversation->camper_id), 'to' => $name($event->leaderId)], null);
+
+            return;
+        }
+        $personId = (string) $event->note;
+        $name = (string) ($this->people->publicProfiles([$personId])[$personId]['firstName'] ?? '');
+        $this->conversations->system(
+            $conversation,
+            $event->change === 'member_left' ? 'party_member_left' : 'party_member_removed',
+            ['name' => $name],
+            $event->change === 'member_left' ? $personId : $event->leaderId,
+        );
     }
 }

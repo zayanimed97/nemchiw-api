@@ -5,6 +5,7 @@ namespace Modules\Chat\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property string $id
@@ -32,15 +33,32 @@ class Conversation extends Model
         return ['trip_starts_at' => 'datetime', 'last_message_at' => 'datetime', 'closes_at' => 'datetime'];
     }
 
+    /** Camper (the current leader), organiser, or a party member who reads. */
     public function isParticipant(string $userId): bool
+    {
+        return $this->canWrite($userId) || DB::table('conversation_readers')
+            ->where('conversation_id', $this->id)->where('user_id', $userId)->exists();
+    }
+
+    /** Only the leader (camper) and the organiser write. */
+    public function canWrite(string $userId): bool
     {
         return $userId === $this->camper_id || $userId === $this->organiser_id;
     }
 
-    /** The other participant, null when they deleted their account. */
-    public function otherThan(string $userId): ?string
+    /** @return list<string> */
+    public function readerIds(): array
     {
-        return $userId === $this->camper_id ? $this->organiser_id : $this->camper_id;
+        return DB::table('conversation_readers')->where('conversation_id', $this->id)->orderBy('user_id')->pluck('user_id')->map(fn ($id) => (string) $id)->all();
+    }
+
+    /** Everyone who sees the conversation, writers first.
+     *
+     * @return list<string>
+     */
+    public function participantIds(): array
+    {
+        return array_values(array_filter([$this->camper_id, $this->organiser_id, ...$this->readerIds()]));
     }
 
     public function isClosed(): bool

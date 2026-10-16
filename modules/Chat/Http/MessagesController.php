@@ -46,7 +46,7 @@ final class MessagesController
         }
 
         return new JsonResponse([
-            'data' => $rows->values()->map(fn (Message $m) => $this->presenter->message($m))->all(),
+            'data' => $this->presenter->messages($conversation, $rows->values()->all()),
             'hasMore' => $more,
         ]);
     }
@@ -55,6 +55,9 @@ final class MessagesController
     {
         $conversation = ConversationAccess::for($request, $id);
         $userId = ConversationAccess::userId($request);
+        if (! $conversation->canWrite($userId)) {
+            throw new ApiException(ApiErrorCode::Forbidden, 'Only the leader and the organiser write here');
+        }
         $data = $request->validate([
             'clientId' => ['required', 'uuid'],
             'kind' => ['required', Rule::in(['text', 'location', 'photo'])],
@@ -71,7 +74,7 @@ final class MessagesController
         // A repeat (the phone retried after a lost answer) costs nothing: no photo work, no limits.
         $existing = Message::query()->where('sender_id', $userId)->where('client_id', $data['clientId'])->first();
         if ($existing !== null) {
-            return new JsonResponse($this->presenter->message($existing), 200);
+            return new JsonResponse($this->presenter->messageIn($conversation, $existing), 200);
         }
 
         $hash = null;
@@ -93,6 +96,6 @@ final class MessagesController
 
         [$message, $created] = $this->conversations->post($conversation, $userId, $data, $hash);
 
-        return new JsonResponse($this->presenter->message($message), $created ? 201 : 200);
+        return new JsonResponse($this->presenter->messageIn($conversation, $message), $created ? 201 : 200);
     }
 }
