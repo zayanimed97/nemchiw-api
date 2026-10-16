@@ -83,6 +83,7 @@ final class RequestTransitions
                 foreach ($memberIds as $memberId) {
                     TripRequestMember::query()->create(['request_id' => $request->id, 'user_id' => $memberId]);
                 }
+                app(PartyRoster::class)->markAsking($partyId, $request->id);
                 event(new RequestChanged($request->id, $trip->id, $leaderId, $trip->organiser_id, 'asked', 'camper', $note));
 
                 return $request;

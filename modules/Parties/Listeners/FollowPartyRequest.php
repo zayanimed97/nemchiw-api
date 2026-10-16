@@ -11,7 +11,7 @@ use Modules\Shared\Events\TripFinished;
 use Modules\Trips\Contracts\TripRequests;
 
 /**
- * The party follows its trip request: asked/accepted -> asking, scanned -> going, an ending ->
+ * The party follows its trip request: accepted -> asking (`asked` is applied by `PartyRoster::markAsking` in the request's own transaction), scanned -> going, an ending ->
  * forming again, trip finished -> over. Requests made without a party are ignored. Every move
  * touches `last_activity_at` (through `Parties::changed`), because the idle sweep keys on it.
  */
@@ -45,12 +45,12 @@ final class FollowPartyRequest
                 return;
             }
 
-            if ($event->change === 'asked' || $event->change === 'accepted') {
+            if ($event->change === 'accepted') {
                 if ($party->state === Party::GOING && $party->request_id === $event->requestId) {
                     return;
                 }
                 $party->forceFill(['state' => Party::ASKING, 'request_id' => $event->requestId])->save();
-                Parties::changed($party, $event->change, null, null);
+                Parties::changed($party, 'request_accepted', null, null);
 
                 return;
             }
@@ -58,7 +58,7 @@ final class FollowPartyRequest
             if ($event->change === 'scanned') {
                 $party->forceFill(['state' => Party::GOING, 'request_id' => $event->requestId])->save();
                 $this->befriend($party, $event->tripId);
-                Parties::changed($party, 'scanned', null, null);
+                Parties::changed($party, 'request_scanned', null, null);
             }
         });
     }
@@ -94,7 +94,7 @@ final class FollowPartyRequest
                 }
                 $row = DB::table('friendships')->where('user_id', $user)->where('friend_id', $friend)->first();
                 if ($row === null) {
-                    DB::table('friendships')->insert(['user_id' => $user, 'friend_id' => $friend, 'reason' => $reason, 'created_at' => now()]);
+                    DB::table('friendships')->insertOrIgnore(['user_id' => $user, 'friend_id' => $friend, 'reason' => $reason, 'created_at' => now()]);
                 } elseif ((json_decode((string) $row->reason, true)['kind'] ?? null) === 'party') {
                     DB::table('friendships')->where('user_id', $user)->where('friend_id', $friend)->update(['reason' => $reason]);
                 }

@@ -12,4 +12,10 @@ interface PartyRoster
      * @return array{memberIds: list<string>, blockers: list<array{memberId: ?string, userId: ?string, name: ?string, reason: string, missing: list<string>}>}
      */
     public function forAsk(string $partyId, string $leaderId, string $tripId): array;
+
+    /**
+     * The party asked: it becomes `asking` with this request. Call in the transaction that
+     * created the request, while `forAsk`'s party lock is still held.
+     */
+    public function markAsking(string $partyId, string $requestId): void;
 }

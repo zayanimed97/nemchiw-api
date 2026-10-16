@@ -1,8 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Event;
 use Modules\Identity\Models\User;
 use Modules\Organisers\Contracts\OrganiserRecords;
 use Modules\Parties\Models\Party;
+use Modules\Shared\Events\RequestChanged;
 use Modules\Trips\Models\TripRequest;
 use Modules\Trips\Models\TripRequestMember;
 use Modules\Trips\Tests\Factories\TripFactory;
@@ -194,4 +196,15 @@ it('shows the request on the party', function () {
 
     partyAs($this, $leader)->getJson('/api/v1/me/party')->assertOk()
         ->assertJsonPath('party.request', ['id' => $request->id, 'tripId' => $trip->id, 'status' => 'pending']);
+});
+
+it('puts the party in asking inside the request\'s transaction, before any event is handled', function () {
+    [$leader, $party, , $trip] = readyPartyOf($this, 1);
+    Event::fake([RequestChanged::class]);
+
+    askAsParty($this, $leader, $party, $trip)->assertCreated();
+
+    $request = TripRequest::query()->sole();
+    expect($party->fresh()->state)->toBe('asking')->and($party->fresh()->request_id)->toBe($request->id);
+    askAsParty($this, $leader, $party, TripFactory::new()->create())->assertStatus(409)->assertJsonPath('code', 'party_locked');
 });
