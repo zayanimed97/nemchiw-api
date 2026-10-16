@@ -24,4 +24,11 @@ return [
     'place_live' => ':place est sur la carte',
     'place_rejected' => ':place n’a pas été accepté',
     'report_reviewed' => 'Votre signalement sur :trip a été examiné',
+    'party_invited' => ':name vous a invité à un groupe',
+    'party_accepted' => ':name a rejoint votre groupe',
+    'party_declined' => ':name a refusé l’invitation au groupe',
+    'party_reminder' => ':name attend votre réponse à l’invitation au groupe',
+    'party_removed' => 'Vous ne faites plus partie du groupe',
+    'party_leader_changed' => ':name dirige maintenant le groupe',
+    'party_ended' => 'Le groupe est terminé',
 ];

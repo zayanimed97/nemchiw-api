@@ -24,4 +24,11 @@ return [
     'place_live' => ':place is on the map',
     'place_rejected' => ':place was not accepted',
     'report_reviewed' => 'Your report on :trip was reviewed',
+    'party_invited' => ':name invited you to a party',
+    'party_accepted' => ':name joined your party',
+    'party_declined' => ':name declined the party invitation',
+    'party_reminder' => ':name is waiting for your answer to the party invitation',
+    'party_removed' => 'You are no longer in the party',
+    'party_leader_changed' => ':name now leads the party',
+    'party_ended' => 'The party has ended',
 ];
