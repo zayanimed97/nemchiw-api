@@ -93,7 +93,7 @@ it('ends access when a member leaves', function () {
     $this->withToken(tokenFor($amine))->getJson("/api/v1/conversations/{$c->id}/messages")->assertStatus(403);
     $line = Message::query()->where('conversation_id', $c->id)->latest('id')->first();
     expect([$line->system_key, $line->system_params])->toBe(['party_member_left', ['name' => 'Amine']]);
-    expect(Message::query()->where('system_key', 'camper')->exists())->toBeFalse();
+    $this->withToken(tokenFor($amine))->getJson('/api/v1/me/conversations')->assertJsonCount(0, 'data');
 });
 
 it('writes party_member_removed with the removed person\'s name', function () {
@@ -146,4 +146,35 @@ it('signs the channel for readers and not for strangers', function () {
 
     $this->withToken(tokenFor($amine))->postJson('/api/v1/broadcasting/auth', $body)->assertOk();
     $this->withToken(tokenFor(tripReady()))->postJson('/api/v1/broadcasting/auth', $body)->assertStatus(403);
+});
+
+it('tells the channel when a member leaves or is removed', function () {
+    [$c, $leader, $amine, $rim] = askedParty($this);
+    $party = TripRequest::query()->sole()->party_id;
+    $this->withoutDefer();
+    FakeRealtime::reset();
+    app()->instance(Realtime::class, new FakeRealtime);
+
+    partyAs($this, $amine)->postJson("/api/v1/parties/{$party}/leave")->assertOk();
+    partyAs($this, $leader)->postJson("/api/v1/parties/{$party}/members/".memberRow(Party::find($party), $rim)->id.'/remove')->assertOk();
+
+    $events = collect(FakeRealtime::$published)->filter(fn ($p) => $p[1] === 'member.removed');
+    expect($events->map(fn ($p) => [$p[0], $p[2]])->values()->all())->toBe([
+        ["private-conversation.{$c->id}", ['userId' => $amine->id]],
+        ["private-conversation.{$c->id}", ['userId' => $rim->id]],
+    ]);
+});
+
+it('keeps a party conversation open when its leader deletes their account', function () {
+    [$c, $leader, $amine, $rim] = askedParty($this);
+
+    $this->withToken(tokenFor($leader))->postJson('/api/v1/me/delete')->assertNoContent();
+
+    $c->refresh();
+    expect($c->closes_at)->toBeNull();
+    expect($c->camper_id)->toBeIn([$amine->id, $rim->id]);
+    $other = $c->camper_id === $amine->id ? $rim : $amine;
+    say($this, User::find($c->camper_id), $c)->assertCreated();
+    say($this, $other, $c)->assertStatus(403);
+    expect($c->readerIds())->toBe([$other->id]);
 });

@@ -58,7 +58,8 @@ final class FollowRequest
             $conversation,
             $event->change === 'member_left' ? 'party_member_left' : 'party_member_removed',
             ['name' => $name],
-            $event->change === 'member_left' ? $personId : $event->leaderId,
+            // A deleted account is gone by now: no actor to point at.
+            $event->change === 'member_left' ? ($name === '' ? null : $personId) : $event->leaderId,
         );
     }
 }

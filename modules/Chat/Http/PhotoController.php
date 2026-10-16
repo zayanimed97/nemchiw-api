@@ -9,7 +9,7 @@ use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
-/** GET /conversations/{id}/photos/{hash}-{size}.webp, for the two participants only. */
+/** GET /conversations/{id}/photos/{hash}-{size}.webp, for the participants only. */
 final class PhotoController
 {
     public function __invoke(Request $request, string $id, string $file, ChatPhotos $photos): BinaryFileResponse

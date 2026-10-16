@@ -4,6 +4,7 @@ namespace Modules\Chat\Listeners;
 
 use Illuminate\Support\Facades\DB;
 use Modules\Chat\Models\Conversation;
+use Modules\Chat\Services\Conversations;
 use Modules\Shared\Events\RequestChanged;
 use Modules\Trips\Contracts\TripRequests;
 
@@ -14,7 +15,7 @@ use Modules\Trips\Contracts\TripRequests;
  */
 final class FollowParty
 {
-    public function __construct(private readonly TripRequests $requests) {}
+    public function __construct(private readonly TripRequests $requests, private readonly Conversations $conversations) {}
 
     public function handle(RequestChanged $event): void
     {
@@ -38,7 +39,7 @@ final class FollowParty
         }
         if ($event->note !== null) {
             DB::table('conversation_readers')->where('conversation_id', $conversation->id)->where('user_id', $event->note)->delete();
+            $this->conversations->announce($conversation, 'member.removed', ['userId' => $event->note]);
         }
-        $conversation->touch(); // the feed of the people involved must see the change
     }
 }

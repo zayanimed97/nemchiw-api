@@ -7,7 +7,7 @@ use Modules\Chat\Models\Conversation;
 use Modules\Shared\Errors\ApiErrorCode;
 use Modules\Shared\Errors\ApiException;
 
-/** A conversation only its two people may touch. */
+/** A conversation only its participants may touch. */
 final class ConversationAccess
 {
     public static function for(Request $request, string $id): Conversation

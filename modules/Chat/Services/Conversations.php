@@ -86,6 +86,22 @@ final class Conversations
         return $message;
     }
 
+    /** Tells the open channel something other than a message happened. After the response; never fails it.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function announce(Conversation $conversation, string $event, array $payload): void
+    {
+        $channel = "private-conversation.{$conversation->id}";
+        defer(function () use ($channel, $event, $payload) {
+            try {
+                $this->realtime->publish($channel, $event, $payload);
+            } catch (\Throwable $e) {
+                Log::warning('chat.broadcast_failed', ['channel' => $channel, 'error' => $e->getMessage()]);
+            }
+        });
+    }
+
     private function touch(Conversation $conversation, Message $message): void
     {
         $conversation->forceFill(['last_message_at' => $message->created_at])->save();
