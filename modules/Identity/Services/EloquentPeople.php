@@ -25,8 +25,19 @@ final class EloquentPeople implements People
 
     public function participantDetails(string $userId): array
     {
-        $user = User::query()->findOrFail($userId);
+        return $this->detailsOf(User::query()->findOrFail($userId));
+    }
 
+    public function participantDetailsFor(array $userIds): array
+    {
+        return User::query()->whereIn('id', array_values(array_unique($userIds)))->get()
+            ->mapWithKeys(fn (User $user) => [$user->id => $this->detailsOf($user)])
+            ->all();
+    }
+
+    /** @return array<string, mixed> */
+    private function detailsOf(User $user): array
+    {
         return [
             'firstName' => $user->first_name,
             'lastName' => $user->last_name,

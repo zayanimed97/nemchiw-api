@@ -24,6 +24,11 @@ final class HostedRequests
             ...$requests->filter(fn (TripRequest $r) => $r->party_id !== null)->flatMap(fn (TripRequest $r) => $r->members->pluck('user_id'))->all(),
         ])));
         $detailsOpen = now()->lessThan($trip->ends_at->copy()->addDays((int) config('trips.details_days')));
+        $scanned = fn (TripRequest $r) => $r->members->whereNotNull('scanned_at')
+            ->sortBy(fn (TripRequestMember $m) => $m->user_id === $r->leader_id ? 0 : 1)->pluck('user_id')->values()->all();
+        $details = $this->people->participantDetailsFor($requests
+            ->filter(fn (TripRequest $r) => $r->status === RequestStatus::JOINED && $detailsOpen)
+            ->flatMap($scanned)->unique()->values()->all());
 
         return $requests->map(fn (TripRequest $r) => [
             'id' => $r->id,
@@ -46,6 +51,9 @@ final class HostedRequests
             'codeSecret' => $r->status === RequestStatus::ACCEPTED ? $r->code_secret : null,
             'report' => $this->presenter->reportBy($r->id, $trip->organiser_id),
             'details' => $r->status === RequestStatus::JOINED && $detailsOpen ? $this->people->participantDetails($r->leader_id) : null,
+            'memberDetails' => $r->status === RequestStatus::JOINED && $detailsOpen
+                ? collect($scanned($r))->filter(fn (string $id) => isset($details[$id]))->map(fn (string $id) => ['userId' => $id, ...$details[$id]])->values()->all()
+                : null,
         ])->values()->all();
     }
 

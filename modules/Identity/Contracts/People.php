@@ -21,6 +21,14 @@ interface People
     public function participantDetails(string $userId): array;
 
     /**
+     * participantDetails for many people in one query, keyed by user id. Unknown ids are left out.
+     *
+     * @param  list<string>  $userIds
+     * @return array<string, array{firstName: ?string, lastName: ?string, gender: ?string, age: ?int, phone: ?string, emergencyContact: ?array{name: string, phone: string}, medicalInfo: ?array{note: ?string}}>
+     */
+    public function participantDetailsFor(array $userIds): array;
+
+    /**
      * Same rules as the app's tripReadiness (see readiness()): names, gender, birth date (18+), verified phone,
      * verified photo, emergency contact.
      *

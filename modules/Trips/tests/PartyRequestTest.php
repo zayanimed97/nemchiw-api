@@ -208,3 +208,72 @@ it('puts the party in asking inside the request\'s transaction, before any event
     expect($party->fresh()->state)->toBe('asking')->and($party->fresh()->request_id)->toBe($request->id);
     askAsParty($this, $leader, $party, TripFactory::new()->create())->assertStatus(409)->assertJsonPath('code', 'party_locked');
 });
+
+/** The organiser's hosted request for this request id. */
+function hostedRequest($test, TripRequest $request): array
+{
+    return collect($test->withToken(tokenFor(User::find($request->trip->organiser_id)))->getJson('/api/v1/me/trips')->json('hosting.0.requests'))
+        ->firstWhere('id', $request->id);
+}
+
+it('gives the organiser every scanned member\'s details, the leader first', function () {
+    [$leader, $party, $members, $trip] = readyPartyOf($this, 2);
+    askAsParty($this, $leader, $party, $trip)->assertCreated();
+    $request = TripRequest::query()->sole();
+    acceptAsOrganiser($this, $request);
+    scan($this, $request, codeFor($request), $members[1])->assertOk();
+
+    $hosted = hostedRequest($this, $request);
+
+    expect($hosted['memberDetails'])->toHaveCount(3)
+        ->and(array_column($hosted['memberDetails'], 'userId'))->toBe([$leader->id, ...collect($members)->pluck('id')->all()])
+        ->and($hosted['memberDetails'][0])->toMatchArray(['userId' => $leader->id, 'phone' => $leader->phone, 'emergencyContact' => $leader->emergency_contact])
+        ->and($hosted['memberDetails'][1]['phone'])->toBe($members[0]->phone)
+        ->and($hosted['memberDetails'][2]['emergencyContact'])->toBe($members[1]->emergency_contact)
+        ->and($hosted['details']['phone'])->toBe($leader->phone);
+});
+
+it('has no member details before the scan', function () {
+    [$leader, $party, , $trip] = readyPartyOf($this, 2);
+    askAsParty($this, $leader, $party, $trip)->assertCreated();
+    $request = TripRequest::query()->sole();
+    acceptAsOrganiser($this, $request);
+
+    expect(hostedRequest($this, $request)['memberDetails'])->toBeNull();
+});
+
+it('drops member details after the details window', function () {
+    [$leader, $party, , $trip] = readyPartyOf($this, 2, ['starts_at' => '2026-10-16 16:00', 'ends_at' => '2026-10-18 13:00']);
+    askAsParty($this, $leader, $party, $trip)->assertCreated();
+    $request = TripRequest::query()->sole();
+    acceptAsOrganiser($this, $request);
+    scan($this, $request, codeFor($request))->assertOk();
+
+    $this->travelTo('2026-11-01 12:59:00');
+    expect(hostedRequest($this, $request)['memberDetails'])->toHaveCount(3);
+    $this->travelTo('2026-11-01 13:01:00');
+    expect($this->withToken(tokenFor(User::find($trip->organiser_id)))->getJson('/api/v1/me/trips')->json('hosting'))->toBe([]);
+});
+
+it('leaves out a member who left before the scan', function () {
+    [$leader, $party, $members, $trip] = readyPartyOf($this);
+    askAsParty($this, $leader, $party, $trip)->assertCreated();
+    $request = TripRequest::query()->sole();
+    acceptAsOrganiser($this, $request);
+    partyAs($this, $members[2])->postJson("/api/v1/parties/{$party->id}/leave")->assertOk();
+    scan($this, $request, codeFor($request))->assertOk();
+
+    $ids = array_column(hostedRequest($this, $request)['memberDetails'], 'userId');
+
+    expect($ids)->toHaveCount(3)->and($ids)->not->toContain($members[2]->id);
+});
+
+it('gives a solo joined request one entry and the same details', function () {
+    $camper = tripReady();
+    $request = TripRequestFactory::new()->joined()->forTrip(TripFactory::new()->create())->create(['leader_id' => $camper->id]);
+
+    $hosted = hostedRequest($this, $request);
+
+    expect($hosted['memberDetails'])->toHaveCount(1)
+        ->and($hosted['memberDetails'][0])->toBe(['userId' => $camper->id, ...$hosted['details']]);
+});
