@@ -28,6 +28,7 @@ return [
     'party_accepted' => ':name دخل لمجموعتك',
     'party_declined' => ':name رفض العرض متاع المجموعة',
     'party_reminder' => ':name يستنّى في جوابك على العرض متاع المجموعة',
+    'party_ready_reminder' => ':name يستنّى فيك باش تكمّل الاستعداد للرحلة',
     'party_removed' => 'ما عادش راك في المجموعة',
     'party_leader_changed' => ':name توّا هو اللي يقود المجموعة',
     'party_ended' => 'المجموعة سكّرت',

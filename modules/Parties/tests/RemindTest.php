@@ -32,7 +32,23 @@ it('reminds an invited member once per 12 hours', function () {
     partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/members/{$row->id}/remind")->assertOk();
 });
 
-it('lets only the leader remind, and only invited people', function () {
+it('reminds a member who is in but not trip-ready, under the same 12 hour rule', function () {
+    [$leader, $amine, $party, $row] = invitedPair($this);
+    partyAs($this, $amine)->postJson("/api/v1/parties/{$party->id}/accept")->assertOk();
+    Event::fake([PartyChanged::class]);
+
+    partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/members/{$row->id}/remind")->assertOk();
+    Event::assertDispatched(PartyChanged::class, fn ($e) => $e->change === 'reminded_ready' && $e->userId === $amine->id && $e->byId === $leader->id);
+
+    $this->travel(11)->hours();
+    partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/members/{$row->id}/remind")
+        ->assertStatus(429)->assertJsonPath('code', 'rate_limited')->assertJsonPath('retryAfter', fn ($v) => $v > 0 && $v <= 3600);
+
+    $this->travel(2)->hours();
+    partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/members/{$row->id}/remind")->assertOk();
+});
+
+it('lets only the leader remind, and only invited or in people', function () {
     [$leader, $amine, $party, $row] = invitedPair($this);
     partyAs($this, $amine)->postJson("/api/v1/parties/{$party->id}/members/{$row->id}/remind")->assertForbidden()->assertJsonPath('code', 'not_leader');
 
@@ -40,8 +56,9 @@ it('lets only the leader remind, and only invited people', function () {
     $placeholder = PartyMember::query()->whereNull('user_id')->first();
     partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/members/{$placeholder->id}/remind")->assertNotFound();
 
-    partyAs($this, $amine)->postJson("/api/v1/parties/{$party->id}/accept")->assertOk();
+    partyAs($this, $amine)->postJson("/api/v1/parties/{$party->id}/decline")->assertOk();
     partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/members/{$row->id}/remind")->assertNotFound();
+    partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/members/{$leader->id}/remind")->assertNotFound();
 });
 
 it('removes a member and tells them', function () {

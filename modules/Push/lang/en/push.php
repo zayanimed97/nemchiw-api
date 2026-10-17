@@ -28,6 +28,7 @@ return [
     'party_accepted' => ':name joined your party',
     'party_declined' => ':name declined the party invitation',
     'party_reminder' => ':name is waiting for your answer to the party invitation',
+    'party_ready_reminder' => ':name is waiting on you to get trip-ready',
     'party_removed' => 'You are no longer in the party',
     'party_leader_changed' => ':name now leads the party',
     'party_ended' => 'The party has ended',

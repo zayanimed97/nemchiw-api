@@ -171,7 +171,7 @@ php artisan migrate --force && php artisan optimize
 - Set `PARTIES_CONTACT_KEY` in `.env` before the first deploy of this slice: the parties code throws
   without it. Generate it once with `php -r 'echo bin2hex(random_bytes(32));'` and never rotate it;
   a new key orphans the placeholder hashes already stored for invitees.
-- New migrations: `users.confirmed_email`, the `parties` tables, `trips.party_id`, and
+- New migrations: `users.confirmed_email`, the `parties` tables, `trip_requests.party_id`, and
   `conversation_readers` (chat).
 - The daily command `parties:end-idle` runs at 03:30 Africa/Tunis (registered in `routes/console.php`).
   Check that `php artisan schedule:list` shows it, and that the every-minute cron is running.

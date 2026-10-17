@@ -83,6 +83,16 @@ it('reminds an invited member', function () {
     expect(partyPushes($hamza))->toBe([]);
 });
 
+it('asks an in member to get trip-ready, with a different text', function () {
+    [$hamza, $amine] = partyFour();
+
+    partyEvent('reminded_ready', $amine, $hamza, $hamza, [$hamza, $amine]);
+
+    expect(partyPushes($amine))->toHaveCount(1);
+    expect(partyPushes($amine)[0]['title'])->toBe('Hamza is waiting on you to get trip-ready');
+    expect(partyPushes($hamza))->toBe([]);
+});
+
 it('tells a removed member', function () {
     [$hamza, $amine] = partyFour();
 

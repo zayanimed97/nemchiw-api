@@ -5,7 +5,7 @@ namespace Modules\Shared\Events;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 
 /**
- * A party moved. `change`: invited, accepted, declined, reminded, removed, left,
+ * A party moved. `change`: invited, accepted, declined, reminded (an invited member), reminded_ready (an `in` member not trip-ready), removed, left,
  * leader_changed, ended, auto_ended, and as the party follows its trip request:
  * request_asked, request_accepted, request_scanned, request_ended. `userId` is the person it is about (null for a
  * placeholder), `byId` who did it (null for the system). `memberIds` is the leader plus

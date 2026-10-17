@@ -144,6 +144,7 @@ final class SendPushes
             'accepted' => [$notice($event->leaderId, 'party_accepted', ['name' => $name($event->userId)])],
             'declined' => [$notice($event->leaderId, 'party_declined', ['name' => $name($event->userId)])],
             'reminded' => $event->userId === null ? [] : [$notice($event->userId, 'party_reminder', ['name' => $name($event->byId ?? $event->leaderId)])],
+            'reminded_ready' => $event->userId === null ? [] : [$notice($event->userId, 'party_ready_reminder', ['name' => $name($event->byId ?? $event->leaderId)])],
             'removed' => $event->userId === null ? [] : [$notice($event->userId, 'party_removed')],
             'leader_changed' => $this->toRemaining($event, 'party_leader_changed', ['name' => $name($event->userId ?? $event->leaderId)], $notice),
             'ended', 'auto_ended' => $this->toRemaining($event, 'party_ended', [], $notice),

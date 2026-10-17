@@ -28,6 +28,7 @@ return [
     'party_accepted' => ':name a rejoint votre groupe',
     'party_declined' => ':name a refusé l’invitation au groupe',
     'party_reminder' => ':name attend votre réponse à l’invitation au groupe',
+    'party_ready_reminder' => ':name attend que vous soyez prêt pour le voyage',
     'party_removed' => 'Vous ne faites plus partie du groupe',
     'party_leader_changed' => ':name dirige maintenant le groupe',
     'party_ended' => 'Le groupe est terminé',
