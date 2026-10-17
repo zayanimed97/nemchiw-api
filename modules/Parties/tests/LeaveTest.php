@@ -70,8 +70,7 @@ it('leaves a valid party when the leader and the earliest member leave together'
         $who = ['leader' => $leader, 'anas' => $anas];
 
         foreach ($order as $name) {
-            $status = leave($this, $party, $who[$name])->status();
-            expect($status)->toBeIn([200, 404]);
+            leave($this, $party, $who[$name])->assertOk();
         }
 
         $fresh = $party->fresh();

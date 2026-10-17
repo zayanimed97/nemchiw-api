@@ -25,8 +25,11 @@ interface TripRequests
      */
     public function requestsOfTrip(string $tripId, array $statuses): array;
 
-    /** The open request (pending, accepted, joined) this person is a member of for the trip. */
-    public function openRequestFor(string $tripId, string $userId): ?string;
+    /**
+     * A request for the trip this person is on that stops them asking again (anything but
+     * declined, withdrawn or lapsed: the same rule the ask applies).
+     */
+    public function blockingRequestFor(string $tripId, string $userId): ?string;
 
     /**
      * A party member leaves the request, or is removed by `$by` (a user id; the same id means they left).

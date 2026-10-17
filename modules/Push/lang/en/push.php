@@ -31,5 +31,6 @@ return [
     'party_ready_reminder' => ':name is waiting on you to get trip-ready',
     'party_removed' => 'You are no longer in the party',
     'party_leader_changed' => ':name now leads the party',
+    'party_you_lead' => 'You now lead the party',
     'party_ended' => 'The party has ended',
 ];

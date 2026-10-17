@@ -117,3 +117,35 @@ it('gives Trips the people and blockers for an ask', function () {
     expect($ask['memberIds'])->toBe([$leader->id, $member->id]);
     expect(collect($ask['blockers'])->pluck('reason')->all())->toBe(['no_answer']);
 });
+
+it('reports the leader as organiser when they organise the trip', function () {
+    [$leader, $party, $trip] = readyParty($this);
+    $trip->forceFill(['organiser_id' => $leader->id])->save();
+
+    $res = partyAs($this, $leader)->getJson(readinessUrl($party, $trip))->assertOk();
+    expect($res->json('ready'))->toBeFalse();
+    expect($res->json('blockers'))->toBe([['memberId' => null, 'userId' => $leader->id, 'name' => 'Leila', 'reason' => 'organiser', 'missing' => []]]);
+});
+
+it('reports a member with no gender on a women-only trip as not_ready with gender missing', function () {
+    [$leader, $party, $trip] = readyParty($this, ['women_only' => true]);
+    $leader->forceFill(['gender' => 'female'])->save();
+    $unknown = tripReady(['first_name' => 'Nour', 'gender' => null]);
+    joinParty($this, $party, $unknown);
+
+    $res = partyAs($this, $leader)->getJson(readinessUrl($party, $trip))->assertOk();
+    expect($res->json('blockers'))->toBe([['memberId' => memberRow($party, $unknown)->id, 'userId' => $unknown->id, 'name' => 'Nour', 'reason' => 'not_ready', 'missing' => ['gender']]]);
+});
+
+it('reports already_requested for a cancelled earlier request, as the ask does', function () {
+    [$leader, $party, $trip] = readyParty($this);
+    $member = tripReady(['first_name' => 'Amine']);
+    joinParty($this, $party, $member);
+    $old = TripRequestFactory::new()->forTrip($trip)->create(['status' => 'cancelled']);
+    TripRequestMember::query()->create(['request_id' => $old->id, 'user_id' => $member->id]);
+    $gone = TripRequestFactory::new()->forTrip($trip)->create(['status' => 'withdrawn']);
+    TripRequestMember::query()->create(['request_id' => $gone->id, 'user_id' => $leader->id]);
+
+    $res = partyAs($this, $leader)->getJson(readinessUrl($party, $trip))->assertOk();
+    expect(collect($res->json('blockers'))->pluck('reason', 'userId')->all())->toBe([$member->id => 'already_requested']);
+});

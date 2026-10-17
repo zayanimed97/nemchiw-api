@@ -53,7 +53,7 @@ function fakeTripRequests(): object
             return [];
         }
 
-        public function openRequestFor(string $tripId, string $userId): ?string
+        public function blockingRequestFor(string $tripId, string $userId): ?string
         {
             return null;
         }

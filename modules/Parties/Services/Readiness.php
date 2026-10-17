@@ -58,7 +58,7 @@ final class Readiness
         $need = $this->people->readiness($userId);
         $reason = match (true) {
             $userId === $trip['organiserId'] => 'organiser',
-            $this->trips->openRequestFor($trip['tripId'], $userId) !== null => 'already_requested',
+            $this->trips->blockingRequestFor($trip['tripId'], $userId) !== null => 'already_requested',
             $need['tooYoung'] => 'too_young',
             $trip['womenOnly'] && $need['gender'] !== null && $need['gender'] !== 'female' => 'women_only',
             ! $need['ready'] => 'not_ready',

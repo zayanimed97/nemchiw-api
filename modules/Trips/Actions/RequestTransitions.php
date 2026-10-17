@@ -3,6 +3,7 @@
 namespace Modules\Trips\Actions;
 
 use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Modules\Identity\Contracts\People;
 use Modules\Organisers\Contracts\OrganiserRecords;
@@ -38,11 +39,7 @@ final class RequestTransitions
             if ($trip->women_only && ($readiness['gender'] !== 'female' || ! $readiness['verifiedPhoto'])) {
                 throw new ApiException(ApiErrorCode::WomenOnlyRequired, 'This trip is for women only');
             }
-            $blocking = TripRequest::query()->where('trip_id', $trip->id)
-                ->whereIn('id', TripRequestMember::query()->where('user_id', $userId)->select('request_id'))
-                ->whereNotIn('status', RequestStatus::MAY_REQUEST_AGAIN)
-                ->exists();
-            if ($blocking) {
+            if ($this->blockingRequests($trip->id, [$userId])->exists()) {
                 throw new ApiException(ApiErrorCode::AlreadyRequested, 'You already asked to join this trip');
             }
             $request = TripRequest::query()->create([
@@ -68,9 +65,7 @@ final class RequestTransitions
             return $this->locked($trip, function (Trip $trip) use ($roster, $leaderId, $partyId, $note) {
                 $this->assertOpen($trip);
                 $memberIds = $roster['memberIds'];
-                $taken = TripRequestMember::query()->whereIn('user_id', $memberIds)
-                    ->whereIn('request_id', TripRequest::query()->where('trip_id', $trip->id)->whereNotIn('status', RequestStatus::MAY_REQUEST_AGAIN)->select('id'))
-                    ->exists();
+                $taken = $this->blockingRequests($trip->id, $memberIds)->exists();
                 if ($roster['blockers'] !== [] || $taken || in_array($trip->organiser_id, $memberIds, true)) {
                     throw new ApiException(ApiErrorCode::PartyNotReady, 'Someone in the party is not ready');
                 }
@@ -114,6 +109,10 @@ final class RequestTransitions
     public function withdraw(TripRequest $request, string $actorId): TripRequest
     {
         return $this->onRequest($request, $actorId, 'leader', RequestStatus::OPEN, function (TripRequest $request) {
+            if ($request->party_id !== null && $request->status === RequestStatus::JOINED) {
+                // after the scan, members leave the party one by one; the leader can't pull them all out
+                throw new ApiException(ApiErrorCode::PartyLocked, 'The party already joined this trip');
+            }
             $request->forceFill(['withdrawn_from' => $request->status])->save();
             $this->end($request, RequestStatus::WITHDRAWN, 'camper');
         });
@@ -192,6 +191,21 @@ final class RequestTransitions
         $request->forceFill(['status' => $status, 'ended_at' => now(), 'ended_by' => $by, 'code_secret' => null])->save();
         $organiserId = (string) Trip::query()->whereKey($request->trip_id)->value('organiser_id');
         event(new RequestChanged($request->id, $request->trip_id, $request->leader_id, $organiserId, $change ?? $status, $by));
+    }
+
+    /**
+     * The one "already asked" rule: requests for this trip that any of these people is on and
+     * that don't let them ask again (anything but declined, withdrawn, lapsed). Readiness
+     * reports the same thing as `already_requested`.
+     *
+     * @param  list<string>  $userIds
+     * @return Builder<TripRequest>
+     */
+    public function blockingRequests(string $tripId, array $userIds): Builder
+    {
+        return TripRequest::query()->where('trip_id', $tripId)
+            ->whereIn('id', TripRequestMember::query()->whereIn('user_id', $userIds)->select('request_id'))
+            ->whereNotIn('status', RequestStatus::MAY_REQUEST_AGAIN);
     }
 
     public function assertOpen(Trip $trip): void

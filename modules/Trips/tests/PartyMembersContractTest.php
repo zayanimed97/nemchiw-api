@@ -24,14 +24,16 @@ function partyRequest(string $state = 'accepted'): array
     return [$trip, $request, $a, $b];
 }
 
-it('finds the open request of a person for a trip', function () {
+it('finds the request that stops a person asking for a trip again', function () {
     [$trip, $request, $a] = partyRequest();
     $other = TripRequestFactory::new()->forTrip($trip)->create(['status' => 'declined']);
+    $cancelled = TripRequestFactory::new()->forTrip($trip)->create(['status' => 'cancelled']);
 
-    expect(app(TripRequests::class)->openRequestFor($trip->id, $a->id))->toBe($request->id);
-    expect(app(TripRequests::class)->openRequestFor($trip->id, $request->leader_id))->toBe($request->id);
-    expect(app(TripRequests::class)->openRequestFor($trip->id, $other->leader_id))->toBeNull();
-    expect(app(TripRequests::class)->openRequestFor($trip->id, tripReady()->id))->toBeNull();
+    expect(app(TripRequests::class)->blockingRequestFor($trip->id, $a->id))->toBe($request->id);
+    expect(app(TripRequests::class)->blockingRequestFor($trip->id, $request->leader_id))->toBe($request->id);
+    expect(app(TripRequests::class)->blockingRequestFor($trip->id, $other->leader_id))->toBeNull();
+    expect(app(TripRequests::class)->blockingRequestFor($trip->id, tripReady()->id))->toBeNull();
+    expect(app(TripRequests::class)->blockingRequestFor($trip->id, $cancelled->leader_id))->toBe($cancelled->id);
 });
 
 it('removes a member who left and says so', function () {

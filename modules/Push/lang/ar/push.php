@@ -31,5 +31,6 @@ return [
     'party_ready_reminder' => ':name يستنّى فيك باش تكمّل الاستعداد للرحلة',
     'party_removed' => 'ما عادش راك في المجموعة',
     'party_leader_changed' => ':name توّا هو اللي يقود المجموعة',
+    'party_you_lead' => 'إنت الكبير متاع المجموعة توّا',
     'party_ended' => 'المجموعة سكّرت',
 ];

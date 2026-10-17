@@ -35,10 +35,11 @@ final class FollowPartyRequest
                 return; // an ended party stays ended (its request was withdrawn by the ending)
             }
 
+            if ($party->request_id !== $event->requestId) {
+                return; // an older request of this party, or a late event after it ended
+            }
+
             if (in_array($event->change, RequestChanged::ENDINGS, true)) {
-                if ($party->request_id !== $event->requestId) {
-                    return; // an older request of this party
-                }
                 $party->forceFill(['state' => Party::FORMING, 'request_id' => null])->save();
                 Parties::changed($party, 'request_ended', null, null);
 
@@ -46,17 +47,17 @@ final class FollowPartyRequest
             }
 
             if ($event->change === 'accepted') {
-                if ($party->state === Party::GOING && $party->request_id === $event->requestId) {
+                if ($party->state === Party::GOING) {
                     return;
                 }
-                $party->forceFill(['state' => Party::ASKING, 'request_id' => $event->requestId])->save();
+                $party->forceFill(['state' => Party::ASKING])->save();
                 Parties::changed($party, 'request_accepted', null, null);
 
                 return;
             }
 
             if ($event->change === 'scanned') {
-                $party->forceFill(['state' => Party::GOING, 'request_id' => $event->requestId])->save();
+                $party->forceFill(['state' => Party::GOING])->save();
                 $this->befriend($party, $event->tripId);
                 Parties::changed($party, 'request_scanned', null, null);
             }

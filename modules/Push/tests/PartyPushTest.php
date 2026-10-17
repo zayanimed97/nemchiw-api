@@ -102,13 +102,13 @@ it('tells a removed member', function () {
     expect(partyPushes($hamza))->toBe([]);
 });
 
-it('tells everyone remaining about a new leader, except the one who acted', function () {
+it('tells everyone remaining about a new leader, and the new leader that they lead now', function () {
     [$hamza, $amine, $sana] = partyFour();
 
     partyEvent('leader_changed', $amine, $hamza, $amine, [$amine, $sana]);
 
-    expect(partyPushes($sana)[0]['title'])->toBe('Amine now leads the party');
-    expect(partyPushes($amine)[0]['title'])->toBe('Amine now leads the party');
+    expect(array_column(partyPushes($sana), 'title'))->toBe(['Amine now leads the party']);
+    expect(array_column(partyPushes($amine), 'title'))->toBe(['You now lead the party']);
     expect(partyPushes($hamza))->toBe([]);
 });
 

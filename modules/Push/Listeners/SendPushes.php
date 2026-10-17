@@ -146,11 +146,26 @@ final class SendPushes
             'reminded' => $event->userId === null ? [] : [$notice($event->userId, 'party_reminder', ['name' => $name($event->byId ?? $event->leaderId)])],
             'reminded_ready' => $event->userId === null ? [] : [$notice($event->userId, 'party_ready_reminder', ['name' => $name($event->byId ?? $event->leaderId)])],
             'removed' => $event->userId === null ? [] : [$notice($event->userId, 'party_removed')],
-            'leader_changed' => $this->toRemaining($event, 'party_leader_changed', ['name' => $name($event->userId ?? $event->leaderId)], $notice),
+            'leader_changed' => $this->leaderChanged($event, $name($event->userId ?? $event->leaderId), $notice),
             'ended', 'auto_ended' => $this->toRemaining($event, 'party_ended', [], $notice),
             default => [], // left, and the request_* changes
         };
         $this->sender->send($notices);
+    }
+
+    /**
+     * The new leader hears that they lead now; everyone else remaining, who leads.
+     *
+     * @return list<Notice>
+     */
+    private function leaderChanged(PartyChanged $event, string $newLeaderName, callable $notice): array
+    {
+        $newLeaderId = $event->userId ?? $event->leaderId;
+
+        return array_map(
+            fn (Notice $n) => $n->userId === $newLeaderId ? $notice($n->userId, 'party_you_lead') : $n,
+            $this->toRemaining($event, 'party_leader_changed', ['name' => $newLeaderName], $notice),
+        );
     }
 
     /** @return list<Notice> */

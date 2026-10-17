@@ -31,5 +31,6 @@ return [
     'party_ready_reminder' => ':name attend que vous soyez prêt pour le voyage',
     'party_removed' => 'Vous ne faites plus partie du groupe',
     'party_leader_changed' => ':name dirige maintenant le groupe',
+    'party_you_lead' => 'Vous dirigez maintenant le groupe',
     'party_ended' => 'Le groupe est terminé',
 ];

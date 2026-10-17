@@ -8,7 +8,6 @@ use Modules\Trips\Contracts\TripRequests;
 use Modules\Trips\Models\Trip;
 use Modules\Trips\Models\TripRequest;
 use Modules\Trips\Models\TripRequestMember;
-use Modules\Trips\Support\RequestStatus;
 
 final class EloquentTripRequests implements TripRequests
 {
@@ -70,11 +69,9 @@ final class EloquentTripRequests implements TripRequests
             ->all();
     }
 
-    public function openRequestFor(string $tripId, string $userId): ?string
+    public function blockingRequestFor(string $tripId, string $userId): ?string
     {
-        $id = TripRequest::query()->where('trip_id', $tripId)->whereIn('status', RequestStatus::OPEN)
-            ->whereIn('id', TripRequestMember::query()->where('user_id', $userId)->select('request_id'))
-            ->orderBy('id')->value('id');
+        $id = $this->transitions->blockingRequests($tripId, [$userId])->orderBy('id')->value('id');
 
         return $id === null ? null : (string) $id;
     }

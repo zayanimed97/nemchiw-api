@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\DB;
 use Modules\Parties\Models\Party;
+use Modules\Shared\Events\RequestChanged;
 use Modules\Shared\Events\TripFinished;
 use Modules\Trips\Actions\Tick;
 use Modules\Trips\Models\TripRequest;
@@ -62,4 +63,18 @@ it('lapsed requests return the party to forming', function () {
     app(Tick::class)();
 
     expect(TripRequest::query()->sole()->status)->toBe('lapsed')->and($party->fresh()->state)->toBe('forming');
+});
+
+it('a late accepted for an ended request does not move the party', function () {
+    [$leader, $party, , $trip] = readyPartyOf($this, 1);
+    askAsParty($this, $leader, $party, $trip)->assertCreated();
+    $request = TripRequest::query()->sole();
+    partyAs($this, $leader)->postJson("/api/v1/requests/{$request->id}/withdraw")->assertOk();
+    expect($party->fresh()->state)->toBe('forming');
+
+    event(new RequestChanged($request->id, $trip->id, $leader->id, $trip->organiser_id, 'accepted', 'organiser'));
+    event(new RequestChanged($request->id, $trip->id, $leader->id, $trip->organiser_id, 'scanned', 'camper'));
+
+    $party->refresh();
+    expect($party->state)->toBe('forming')->and($party->request_id)->toBeNull();
 });

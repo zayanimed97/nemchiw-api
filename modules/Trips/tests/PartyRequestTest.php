@@ -277,3 +277,58 @@ it('gives a solo joined request one entry and the same details', function () {
     expect($hosted['memberDetails'])->toHaveCount(1)
         ->and($hosted['memberDetails'][0])->toBe(['userId' => $camper->id, ...$hosted['details']]);
 });
+
+/** A party of the leader and `$others`, asked, accepted and scanned. */
+function goingParty($test, int $others = 2): array
+{
+    [$leader, $party, $members, $trip] = readyPartyOf($test, $others);
+    askAsParty($test, $leader, $party, $trip)->assertCreated();
+    $request = TripRequest::query()->sole();
+    acceptAsOrganiser($test, $request);
+    scan($test, $request, codeFor($request))->assertOk();
+
+    return [$leader, $party, $members, $trip, $request];
+}
+
+it('refuses to end the party after the scan', function () {
+    [$leader, $party, , , $request] = goingParty($this);
+
+    partyAs($this, $leader)->postJson("/api/v1/parties/{$party->id}/end")->assertStatus(409)->assertJsonPath('code', 'party_locked');
+
+    expect($party->fresh()->state)->toBe('going')->and($request->fresh()->status)->toBe('joined');
+});
+
+it('refuses the leader\'s withdraw of a joined party request; members leave one by one', function () {
+    [$leader, $party, $members, , $request] = goingParty($this);
+
+    partyAs($this, $leader)->postJson("/api/v1/requests/{$request->id}/withdraw")->assertStatus(409)->assertJsonPath('code', 'party_locked');
+    expect($request->fresh()->status)->toBe('joined')->and($party->fresh()->state)->toBe('going');
+
+    partyAs($this, $members[0])->postJson("/api/v1/parties/{$party->id}/leave")->assertOk();
+    expect($request->fresh()->status)->toBe('joined')->and(TripRequestMember::query()->where('request_id', $request->id)->count())->toBe(2);
+});
+
+it('still lets the leader withdraw a party request before the scan', function () {
+    [$leader, $party, , $trip] = readyPartyOf($this, 1);
+    askAsParty($this, $leader, $party, $trip)->assertCreated();
+    $request = TripRequest::query()->sole();
+    acceptAsOrganiser($this, $request);
+
+    partyAs($this, $leader)->postJson("/api/v1/requests/{$request->id}/withdraw")->assertOk();
+    expect($request->fresh()->status)->toBe('withdrawn');
+});
+
+it('after the organiser cancels, readiness and the ask agree: already_requested', function () {
+    [$leader, $party, $members, $trip] = readyPartyOf($this, 1);
+    askAsParty($this, $leader, $party, $trip)->assertCreated();
+    $request = TripRequest::query()->sole();
+    acceptAsOrganiser($this, $request);
+    $this->withToken(tokenFor(User::find($trip->organiser_id)))->postJson("/api/v1/requests/{$request->id}/cancel")->assertOk();
+    expect($party->fresh()->state)->toBe('forming');
+
+    $res = partyAs($this, $leader)->getJson("/api/v1/parties/{$party->id}/readiness?trip={$trip->id}")->assertOk();
+    expect($res->json('ready'))->toBeFalse();
+    expect(collect($res->json('blockers'))->pluck('reason', 'userId')->all())
+        ->toBe([$leader->id => 'already_requested', $members[0]->id => 'already_requested']);
+    askAsParty($this, $leader, $party, $trip)->assertStatus(409)->assertJsonPath('code', 'party_not_ready');
+});
